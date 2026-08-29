@@ -43,6 +43,7 @@ import { resolveDesktopPairingUrl, resolveHostedPairingUrl } from "./pairingUrls
 import {
   applyWslEnableSelection,
   isQrShareableEndpoint,
+  networkAccessRelaunchCommand,
   selectQrEndpointOption,
 } from "./ConnectionsSettings.logic";
 import {
@@ -1745,6 +1746,26 @@ function CloudRemoteEnvironmentRows({
 
 export function ConnectionsSettings() {
   const desktopBridge = window.desktopBridge;
+  const networkAccessCommand = networkAccessRelaunchCommand(import.meta.env.DEV);
+  const { copyToClipboard: copyNetworkAccessCommand } = useCopyToClipboard<{
+    command: string;
+  }>({
+    target: "network access restart command",
+    onCopy: ({ command }) => {
+      toastManager.add({
+        type: "success",
+        title: "Restart command copied",
+        description: `Stop this server, then run \`${command}\` on the server machine.`,
+      });
+    },
+    onError: (error) => {
+      toastManager.add({
+        type: "error",
+        title: "Could not copy restart command",
+        description: error.message,
+      });
+    },
+  });
   const { environments } = useEnvironments();
   const primaryEnvironment = usePrimaryEnvironment();
   const connectPairing = useAtomCommand(connectPairingAtom, { reportFailure: false });
@@ -2991,23 +3012,30 @@ export function ConnectionsSettings() {
           : "This backend is only reachable on this machine. Restart it with a non-loopback host to enable remote pairing."
       }
       control={
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <span className="inline-flex">
-                <Switch
-                  checked={isLocalBackendNetworkAccessible}
-                  disabled
-                  aria-label="Enable network access"
-                />
-              </span>
+        currentAuthPolicy === "remote-reachable" ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <span className="inline-flex">
+                  <Switch checked disabled aria-label="Network access enabled" />
+                </span>
+              }
+            />
+            <TooltipPopup side="top">
+              Network exposure changes must be controlled where the server process is launched.
+            </TooltipPopup>
+          </Tooltip>
+        ) : (
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={() =>
+              copyNetworkAccessCommand(networkAccessCommand, { command: networkAccessCommand })
             }
-          />
-          <TooltipPopup side="top">
-            Network exposure changes restart the backend and must be controlled where the server
-            process is launched.
-          </TooltipPopup>
-        </Tooltip>
+          >
+            Copy restart command
+          </Button>
+        )
       }
     />
   );

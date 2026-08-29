@@ -2,6 +2,10 @@ import type { AdvertisedEndpoint, DesktopBridge, DesktopWslState } from "@t3tool
 
 type WslEnableBridge = Pick<DesktopBridge, "setWslBackendEnabled" | "setWslDistro" | "setWslOnly">;
 
+export function networkAccessRelaunchCommand(isDevelopment: boolean): string {
+  return isDevelopment ? "vp run dev --host 0.0.0.0" : "npx t3 serve --host 0.0.0.0";
+}
+
 /**
  * A QR code encoding a loopback URL makes the scanning device dial itself, so
  * loopback endpoints stay copyable from the endpoint menu but are never

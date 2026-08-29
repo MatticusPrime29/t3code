@@ -106,6 +106,23 @@ From there, connect from another device in either of these ways:
 
 Use `t3 serve --help` for the full flag reference. It supports the same general startup options as the normal server command, including an optional `cwd` argument.
 
+The web app cannot change this setting in place because it does not own the server process. In a
+published installation, stop the current server and relaunch it with a non-loopback host:
+
+```bash
+npx t3 serve --host 0.0.0.0
+```
+
+When developing from a source checkout, use the workspace runner instead:
+
+```bash
+vp run dev --host 0.0.0.0
+```
+
+In either case, **Settings** → **Connections** reports network access as enabled after the client
+reconnects. Bind to a specific private-network address instead of `0.0.0.0` when you only want the
+server reachable through that network.
+
 For hosted web pairing over Tailscale HTTPS, opt in to Tailscale Serve:
 
 ```bash

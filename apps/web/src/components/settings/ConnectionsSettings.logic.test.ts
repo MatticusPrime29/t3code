@@ -3,8 +3,19 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import {
   applyWslEnableSelection,
   isQrShareableEndpoint,
+  networkAccessRelaunchCommand,
   selectQrEndpointOption,
 } from "./ConnectionsSettings.logic";
+
+describe("networkAccessRelaunchCommand", () => {
+  it("uses the workspace runner for source development", () => {
+    expect(networkAccessRelaunchCommand(true)).toBe("vp run dev --host 0.0.0.0");
+  });
+
+  it("uses the published CLI outside development", () => {
+    expect(networkAccessRelaunchCommand(false)).toBe("npx t3 serve --host 0.0.0.0");
+  });
+});
 
 const baseWslState: DesktopWslState = {
   enabled: false,

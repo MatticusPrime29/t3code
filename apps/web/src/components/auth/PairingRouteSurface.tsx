@@ -307,7 +307,7 @@ function describeAuthGate(bootstrapMethods: ReadonlyArray<string>): string {
   return "Enter a pairing token to start a session with this environment.";
 }
 
-function describeSupportedMethods(bootstrapMethods: ReadonlyArray<string>): string {
+export function describeSupportedMethods(bootstrapMethods: ReadonlyArray<string>): string {
   if (
     bootstrapMethods.includes("desktop-bootstrap") &&
     bootstrapMethods.includes("one-time-token")
@@ -319,5 +319,5 @@ function describeSupportedMethods(bootstrapMethods: ReadonlyArray<string>): stri
     return "This environment is desktop-managed. Open it from the desktop app or paste a bootstrap credential if one was issued explicitly.";
   }
 
-  return "This environment accepts one-time pairing tokens. Pairing links can open this page directly, or you can paste the token here.";
+  return "On the server machine, run `npx t3 pair` to print a one-time token and full pairing link. Open the full link in this browser, or paste the token here.";
 }
