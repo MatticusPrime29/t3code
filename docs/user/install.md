@@ -86,6 +86,8 @@ authenticated shows its status in **Settings** and fails at session start with t
 to run.
 
 For multi-account setups, see [Codex](./providers-codex.md) and [Claude](./providers-claude.md).
+To use OpenRouter models through the OpenCode harness, see
+[OpenCode and OpenRouter](./providers-opencode.md).
 
 ## Next Steps
 
