@@ -41,7 +41,7 @@ describe("shouldBundleCliDependency", () => {
     assert.strictEqual(shouldBundleCliDependency("node:fs"), false);
   });
 
-  it("leaves native addons and their dlopen wrappers external", () => {
+  it("leaves runtime filesystem packages external", () => {
     for (const id of [
       "node-pty",
       "ffi-rs",
@@ -50,6 +50,7 @@ describe("shouldBundleCliDependency", () => {
       "@clerk/electron-passkeys",
       "msgpackr-extract",
       "@msgpackr-extract/msgpackr-extract-win32-x64",
+      "playwright-core",
     ]) {
       assert.strictEqual(shouldBundleCliDependency(id), false, id);
     }
@@ -87,7 +88,7 @@ describe("selectCliRuntimeExternalDependencies", () => {
   it("selects every external root declared by the server", () => {
     assert.deepStrictEqual(
       Object.keys(selectCliRuntimeExternalDependencies(serverPackageJson.dependencies)).sort(),
-      ["@ff-labs/fff-node", "msgpackr-extract", "node-pty"],
+      ["@ff-labs/fff-node", "msgpackr-extract", "node-pty", "playwright-core"],
     );
   });
 });

@@ -35,6 +35,10 @@ export const CLI_RUNTIME_EXTERNAL_PREFIXES = [
   "msgpackr-extract",
   "node-gyp-build",
   "node-addon-api",
+  // Playwright resolves browser assets and its bundled helper modules relative
+  // to its package directory. Inlining it into the ESM CLI removes that
+  // directory boundary and leaves CommonJS helpers without __dirname.
+  "playwright-core",
   // Required by node-gyp-build-optional-packages. Not native, but in the
   // closure: without it, WSL gets MODULE_NOT_FOUND while Windows is fine.
   "detect-libc",
