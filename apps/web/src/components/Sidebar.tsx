@@ -52,6 +52,7 @@ import {
   SettingsIcon,
   SquarePenIcon,
   TerminalIcon,
+  TrelloIcon,
   Undo2Icon,
   XIcon,
 } from "lucide-react";
@@ -170,6 +171,7 @@ import {
 } from "./Sidebar.snooze";
 import { ProjectFavicon } from "./ProjectFavicon";
 import { ProviderInstanceIcon } from "./chat/ProviderInstanceIcon";
+import { TrelloSidebarList } from "./TrelloSidebarList";
 import { getTriggerDisplayModelLabel } from "./chat/providerIconUtils";
 import {
   deriveProviderEntriesByEnvironment,
@@ -209,6 +211,7 @@ const SETTLED_TAIL_PAGE_COUNT = 25;
 // Keep the v2 key so existing preferences survive the v2-to-default rename.
 const SETTLED_SHELF_EXPANDED_KEY = "t3code:sidebar-v2:settled-expanded";
 const SNOOZED_SHELF_EXPANDED_KEY = "t3code:sidebar-v2:snoozed-expanded";
+const TRELLO_VIEW_ENABLED_KEY = "t3code:sidebar:trello-view-enabled";
 
 function compactSidebarTimeLabel(label: string): string {
   if (label === "just now") return "now";
@@ -1823,6 +1826,11 @@ export default function Sidebar() {
   );
   const { environments } = useEnvironments();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
+  const [trelloViewEnabled, setTrelloViewEnabled] = useLocalStorage(
+    TRELLO_VIEW_ENABLED_KEY,
+    false,
+    Schema.Boolean,
+  );
   const clearSelection = useThreadSelectionStore((s) => s.clearSelection);
   const setSelectionAnchor = useThreadSelectionStore((s) => s.setAnchor);
   const toggleThreadSelection = useThreadSelectionStore((s) => s.toggleThread);
@@ -3664,6 +3672,30 @@ export default function Sidebar() {
                       <SidebarMenuButton
                         size="icon"
                         className="relative shrink-0 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
+                        onClick={() => setTrelloViewEnabled((enabled) => !enabled)}
+                        type="button"
+                        aria-label={`${trelloViewEnabled ? "Hide" : "Show"} Trello cards`}
+                        aria-pressed={trelloViewEnabled}
+                        data-active={trelloViewEnabled || undefined}
+                      />
+                    }
+                  >
+                    <TrelloIcon className={cn(trelloViewEnabled && "text-[#0c66e4]")} />
+                    <span
+                      className="pointer-events-none absolute left-1/2 top-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
+                      aria-hidden="true"
+                    />
+                  </TooltipTrigger>
+                  <TooltipPopup side="right">
+                    {trelloViewEnabled ? "Show chats" : "Show Trello cards"}
+                  </TooltipPopup>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <SidebarMenuButton
+                        size="icon"
+                        className="relative shrink-0 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
                         onClick={openAddProjectCommandPalette}
                         type="button"
                         aria-label="New project"
@@ -3743,7 +3775,14 @@ export default function Sidebar() {
               </p>
             )
           ) : null}
-          {!isSearchingThreads ? (
+          {!isSearchingThreads && trelloViewEnabled && primaryEnvironmentId ? (
+            <TrelloSidebarList
+              environmentId={primaryEnvironmentId}
+              scopedProjectKeys={scopedProjectKeys}
+              onNavigateToThread={navigateToThread}
+            />
+          ) : null}
+          {!isSearchingThreads && !trelloViewEnabled ? (
             <TooltipProvider
               key="sidebar-thread-tooltips-150"
               delay={150}
@@ -4020,6 +4059,7 @@ export default function Sidebar() {
             </TooltipProvider>
           ) : null}
           {!isSearchingThreads &&
+          !trelloViewEnabled &&
           visibleDraftSessionCount === 0 &&
           pinnedThreads.length +
             activeThreads.length +

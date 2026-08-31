@@ -118,6 +118,7 @@ import {
 } from "../../lib/attachmentUploadState";
 import { isCommandPaletteOpen } from "../../commandPaletteBus";
 import { getTerminalFocusOwner } from "../../lib/terminalFocus";
+import { readLocalApi } from "../../localApi";
 import { resolveShortcutCommand, shortcutLabelForCommand } from "../../keybindings";
 import {
   type TerminalContextDraft,
@@ -306,6 +307,7 @@ import {
   PenLineIcon,
   RotateCcwIcon,
   SparklesIcon,
+  TrelloIcon,
   XIcon,
 } from "lucide-react";
 import { proposedPlanTitle } from "../../proposedPlan";
@@ -687,6 +689,7 @@ export interface ChatComposerProps {
   keybindings: ResolvedKeybindingsConfig;
   terminalOpen: boolean;
   gitCwd: string | null;
+  trelloCardUrl: string | null;
 
   // Refs the parent needs kept in sync
   promptRef: React.RefObject<string>;
@@ -781,6 +784,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     keybindings,
     terminalOpen,
     gitCwd,
+    trelloCardUrl,
     promptRef,
     composerRef,
     composerImagesRef,
@@ -4189,6 +4193,25 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                   }
                   className="flex shrink-0 flex-nowrap items-center justify-end gap-2"
                 >
+                  {trelloCardUrl && pendingUserInputs.length === 0 ? (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onPointerDown={(event) => event.preventDefault()}
+                            onClick={() => void readLocalApi()?.shell.openExternal(trelloCardUrl)}
+                            aria-label="Open Trello card"
+                          />
+                        }
+                      >
+                        <TrelloIcon className="text-[#0c66e4]" />
+                      </TooltipTrigger>
+                      <TooltipPopup>Open Trello card</TooltipPopup>
+                    </Tooltip>
+                  ) : null}
                   {fileStagingLimit !== null && pendingUserInputs.length === 0 ? (
                     <>
                       <input

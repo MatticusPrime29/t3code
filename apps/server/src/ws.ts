@@ -128,6 +128,7 @@ import * as TraceDiagnostics from "./diagnostics/TraceDiagnostics.ts";
 import * as PullRequestService from "./pullRequest/PullRequestService.ts";
 import * as SourceControlDiscovery from "./sourceControl/SourceControlDiscovery.ts";
 import * as SourceControlRepositoryService from "./sourceControl/SourceControlRepositoryService.ts";
+import * as TrelloService from "./trello/TrelloService.ts";
 import * as AzureDevOpsCli from "./sourceControl/AzureDevOpsCli.ts";
 import * as BitbucketApi from "./sourceControl/BitbucketApi.ts";
 import * as GitHubCli from "./sourceControl/GitHubCli.ts";
@@ -552,6 +553,7 @@ const makeWsRpcLayer = (
       const processResourceMonitor = yield* ProcessResourceMonitor.ProcessResourceMonitor;
       const resourceTelemetry = yield* ResourceTelemetry.ResourceTelemetry;
       const usage = yield* UsageService.UsageService;
+      const trello = yield* TrelloService.TrelloService;
       const relayClient = yield* RelayClient.RelayClient;
       const authorizationError = (requiredScope: AuthEnvironmentScope) =>
         new EnvironmentAuthorizationError({
@@ -1768,6 +1770,60 @@ const makeWsRpcLayer = (
           observeRpcEffect(WS_METHODS.serverGetUsageSummary, usage.readSummary(input), {
             "rpc.aggregate": "server",
           }),
+        [WS_METHODS.trelloGetSettings]: (_input) =>
+          observeRpcEffect(WS_METHODS.trelloGetSettings, trello.getSettings, {
+            "rpc.aggregate": "trello",
+          }),
+        [WS_METHODS.trelloSaveCredentials]: (input) =>
+          observeRpcEffect(WS_METHODS.trelloSaveCredentials, trello.saveCredentials(input), {
+            "rpc.aggregate": "trello",
+          }),
+        [WS_METHODS.trelloClearCredentials]: (_input) =>
+          observeRpcEffect(WS_METHODS.trelloClearCredentials, trello.clearCredentials, {
+            "rpc.aggregate": "trello",
+          }),
+        [WS_METHODS.trelloListBoards]: (_input) =>
+          observeRpcEffect(WS_METHODS.trelloListBoards, trello.listBoards, {
+            "rpc.aggregate": "trello",
+          }),
+        [WS_METHODS.trelloListBoardLists]: (input) =>
+          observeRpcEffect(WS_METHODS.trelloListBoardLists, trello.listBoardLists(input.boardId), {
+            "rpc.aggregate": "trello",
+          }),
+        [WS_METHODS.trelloUpsertBoard]: (input) =>
+          observeRpcEffect(WS_METHODS.trelloUpsertBoard, trello.upsertBoard(input), {
+            "rpc.aggregate": "trello",
+          }),
+        [WS_METHODS.trelloDeleteBoard]: (input) =>
+          observeRpcEffect(WS_METHODS.trelloDeleteBoard, trello.deleteBoard(input.boardId), {
+            "rpc.aggregate": "trello",
+          }),
+        [WS_METHODS.trelloListCards]: (_input) =>
+          observeRpcEffect(WS_METHODS.trelloListCards, trello.listCards, {
+            "rpc.aggregate": "trello",
+          }),
+        [WS_METHODS.trelloLinkThread]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.trelloLinkThread,
+            trello.linkThread(input.cardId, input.threadId),
+            { "rpc.aggregate": "trello" },
+          ),
+        [WS_METHODS.trelloGetThreadCard]: (input) =>
+          observeRpcEffect(WS_METHODS.trelloGetThreadCard, trello.getThreadCard(input.threadId), {
+            "rpc.aggregate": "trello",
+          }),
+        [WS_METHODS.trelloGetCardContext]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.trelloGetCardContext,
+            trello.getCardContext(input.cardId, input.since),
+            { "rpc.aggregate": "trello" },
+          ),
+        [WS_METHODS.trelloPrepareAttachments]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.trelloPrepareAttachments,
+            trello.prepareAttachments(input.cardId, input.attachmentIds),
+            { "rpc.aggregate": "trello" },
+          ),
         [WS_METHODS.serverRetryResourceTelemetry]: (_input) =>
           observeRpcEffect(WS_METHODS.serverRetryResourceTelemetry, resourceTelemetry.retry, {
             "rpc.aggregate": "server",
@@ -2527,6 +2583,7 @@ export const websocketRpcRouteLayer = Layer.unwrap(
     const previewAutomationBroker = yield* PreviewAutomationBroker.PreviewAutomationBroker;
     const serverSelfUpdate = yield* ServerSelfUpdate.ServerSelfUpdate;
     const pullRequests = yield* PullRequestService.PullRequestService;
+    const trello = yield* TrelloService.TrelloService;
     return HttpRouter.add(
       "GET",
       "/ws",
@@ -2566,6 +2623,7 @@ export const websocketRpcRouteLayer = Layer.unwrap(
               // One server-lifetime service means clients share the same PR caches, and a WS
               // mutation invalidates the HTTP diff cache that every client reads from.
               Layer.provide(Layer.succeed(PullRequestService.PullRequestService, pullRequests)),
+              Layer.provide(Layer.succeed(TrelloService.TrelloService, trello)),
               Layer.provide(
                 SourceControlDiscovery.layer.pipe(
                   Layer.provide(

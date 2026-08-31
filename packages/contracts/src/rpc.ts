@@ -205,6 +205,24 @@ import {
   SourceControlRepositoryLookupInput,
 } from "./sourceControl.ts";
 import { VcsError } from "./vcs.ts";
+import {
+  TrelloBoard,
+  TrelloCardContext,
+  TrelloCardContextInput,
+  TrelloCardListItem,
+  TrelloCredentials,
+  TrelloDeleteBoardInput,
+  TrelloIntegrationError,
+  TrelloIntegrationSettings,
+  TrelloLinkThreadInput,
+  TrelloList,
+  TrelloListBoardListsInput,
+  TrelloPrepareAttachmentsInput,
+  TrelloPreparedAttachment,
+  TrelloThreadCard,
+  TrelloThreadCardInput,
+  TrelloUpsertBoardInput,
+} from "./trello.ts";
 
 export const WS_METHODS = {
   // Project registry methods
@@ -291,6 +309,20 @@ export const WS_METHODS = {
   serverReportHostPowerState: "server.reportHostPowerState",
   serverGetBackgroundPolicy: "server.getBackgroundPolicy",
   serverGetUsageSummary: "server.getUsageSummary",
+
+  // Trello integration methods
+  trelloGetSettings: "trello.getSettings",
+  trelloSaveCredentials: "trello.saveCredentials",
+  trelloClearCredentials: "trello.clearCredentials",
+  trelloListBoards: "trello.listBoards",
+  trelloListBoardLists: "trello.listBoardLists",
+  trelloUpsertBoard: "trello.upsertBoard",
+  trelloDeleteBoard: "trello.deleteBoard",
+  trelloListCards: "trello.listCards",
+  trelloLinkThread: "trello.linkThread",
+  trelloGetThreadCard: "trello.getThreadCard",
+  trelloGetCardContext: "trello.getCardContext",
+  trelloPrepareAttachments: "trello.prepareAttachments",
 
   // Cloud environment methods
   cloudGetRelayClientStatus: "cloud.getRelayClientStatus",
@@ -451,6 +483,80 @@ export const WsServerGetUsageSummaryRpc = Rpc.make(WS_METHODS.serverGetUsageSumm
   payload: UsageSummaryInput,
   success: UsageSummary,
   error: Schema.Union([EnvironmentAuthorizationError, UsageReadError]),
+});
+
+const TrelloReadError = Schema.Union([TrelloIntegrationError, EnvironmentAuthorizationError]);
+
+export const WsTrelloGetSettingsRpc = Rpc.make(WS_METHODS.trelloGetSettings, {
+  payload: Schema.Struct({}),
+  success: TrelloIntegrationSettings,
+  error: TrelloReadError,
+});
+
+export const WsTrelloSaveCredentialsRpc = Rpc.make(WS_METHODS.trelloSaveCredentials, {
+  payload: TrelloCredentials,
+  success: TrelloIntegrationSettings,
+  error: TrelloReadError,
+});
+
+export const WsTrelloClearCredentialsRpc = Rpc.make(WS_METHODS.trelloClearCredentials, {
+  payload: Schema.Struct({}),
+  success: TrelloIntegrationSettings,
+  error: TrelloReadError,
+});
+
+export const WsTrelloListBoardsRpc = Rpc.make(WS_METHODS.trelloListBoards, {
+  payload: Schema.Struct({}),
+  success: Schema.Array(TrelloBoard),
+  error: TrelloReadError,
+});
+
+export const WsTrelloListBoardListsRpc = Rpc.make(WS_METHODS.trelloListBoardLists, {
+  payload: TrelloListBoardListsInput,
+  success: Schema.Array(TrelloList),
+  error: TrelloReadError,
+});
+
+export const WsTrelloUpsertBoardRpc = Rpc.make(WS_METHODS.trelloUpsertBoard, {
+  payload: TrelloUpsertBoardInput,
+  success: TrelloIntegrationSettings,
+  error: TrelloReadError,
+});
+
+export const WsTrelloDeleteBoardRpc = Rpc.make(WS_METHODS.trelloDeleteBoard, {
+  payload: TrelloDeleteBoardInput,
+  success: TrelloIntegrationSettings,
+  error: TrelloReadError,
+});
+
+export const WsTrelloListCardsRpc = Rpc.make(WS_METHODS.trelloListCards, {
+  payload: Schema.Struct({}),
+  success: Schema.Array(TrelloCardListItem),
+  error: TrelloReadError,
+});
+
+export const WsTrelloLinkThreadRpc = Rpc.make(WS_METHODS.trelloLinkThread, {
+  payload: TrelloLinkThreadInput,
+  success: Schema.Void,
+  error: TrelloReadError,
+});
+
+export const WsTrelloGetThreadCardRpc = Rpc.make(WS_METHODS.trelloGetThreadCard, {
+  payload: TrelloThreadCardInput,
+  success: Schema.NullOr(TrelloThreadCard),
+  error: TrelloReadError,
+});
+
+export const WsTrelloGetCardContextRpc = Rpc.make(WS_METHODS.trelloGetCardContext, {
+  payload: TrelloCardContextInput,
+  success: TrelloCardContext,
+  error: TrelloReadError,
+});
+
+export const WsTrelloPrepareAttachmentsRpc = Rpc.make(WS_METHODS.trelloPrepareAttachments, {
+  payload: TrelloPrepareAttachmentsInput,
+  success: Schema.Array(TrelloPreparedAttachment),
+  error: TrelloReadError,
 });
 
 export const WsServerSignalProcessRpc = Rpc.make(WS_METHODS.serverSignalProcess, {
@@ -1044,6 +1150,18 @@ export const WsRpcGroup = RpcGroup.make(
   WsServerGetResourceTelemetryHistoryRpc,
   WsServerRetryResourceTelemetryRpc,
   WsServerGetUsageSummaryRpc,
+  WsTrelloGetSettingsRpc,
+  WsTrelloSaveCredentialsRpc,
+  WsTrelloClearCredentialsRpc,
+  WsTrelloListBoardsRpc,
+  WsTrelloListBoardListsRpc,
+  WsTrelloUpsertBoardRpc,
+  WsTrelloDeleteBoardRpc,
+  WsTrelloListCardsRpc,
+  WsTrelloLinkThreadRpc,
+  WsTrelloGetThreadCardRpc,
+  WsTrelloGetCardContextRpc,
+  WsTrelloPrepareAttachmentsRpc,
   WsServerSignalProcessRpc,
   WsServerReportClientActivityRpc,
   WsServerReportHostPowerStateRpc,

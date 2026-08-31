@@ -55,6 +55,7 @@ import {
   SettingsSection,
 } from "./settingsLayout";
 import { searchableSetting } from "./settingsSearch";
+import { TrelloSettingsSection } from "./TrelloSettings";
 
 const FILL_VALUE = "fill";
 const RESPONSIVE_VALUE = "responsive";
@@ -525,6 +526,7 @@ export function IntegrationsSettingsPanel() {
           previewDefaults
         )}
       </SettingsSection>
+      <TrelloSettingsSection />
     </SettingsPageContainer>
   );
 }
