@@ -12,6 +12,10 @@ npx t3 pair
 
 `t3 pair` finds the running server (the shared `~/.t3` install, or the current worktree's dev server when run inside one), issues a one-time pairing token, and prints the pairing URL as a QR code you can scan from your phone.
 
+Use each pairing link exactly once. Either open or scan it, or paste it directly into **Add
+Environment** in an existing client. Opening or scanning the link consumes its token, so it cannot
+be pasted afterward.
+
 If the server is only bound to loopback, the printed URL is not reachable from another device. Pair over your tailnet instead:
 
 ```bash
@@ -97,7 +101,7 @@ npx t3 serve --host "$(tailscale ip -4)"
 - a pairing URL
 - a QR code for the pairing URL
 
-From there, connect from another device in either of these ways:
+From there, choose one way to connect. The pairing link is consumed by the first successful use:
 
 - scan the QR code on your phone
 - in the desktop app, enter the full pairing URL
@@ -209,7 +213,8 @@ Instead:
 2. The remote device exchanges that token with the server.
 3. The server creates an authenticated session for that device.
 
-After pairing, future access is session-based. You do not need to keep reusing the original token unless you are pairing a new device.
+After pairing, future access is session-based. The original token cannot be reused; mint a fresh
+pairing link for each additional device.
 
 ## Hosted Web App Pairing
 
@@ -252,6 +257,6 @@ controls remain in **Settings** → **Connections** on web and desktop or **Sett
 
 - Treat pairing URLs and pairing tokens like passwords.
 - Prefer binding `--host` to a trusted private address, such as a Tailnet IP, instead of exposing the server broadly.
-- Anyone with a valid pairing credential can create a session until that credential expires or is revoked.
+- Anyone with a valid pairing credential can create one session before that credential is consumed, expires, or is revoked.
 - Hosted pairing links keep the credential in the URL hash so it is not sent to the hosted app server, but it can still be exposed through browser history, screenshots, logs, or copy/paste.
 - Use `t3 auth` to revoke credentials or sessions you no longer trust.

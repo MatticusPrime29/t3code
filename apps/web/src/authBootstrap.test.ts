@@ -347,7 +347,8 @@ describe("resolveInitialServerAuthGateState", () => {
     expect(error).toMatchObject({
       _tag: "PrimaryEnvironmentPairingCredentialRejectedError",
       providedLength: 9,
-      message: "Invalid pairing token. Check the token and try again.",
+      message:
+        "This pairing token is invalid, expired, or already used. Generate a new pairing link and try again.",
     });
     expect(isPrimaryEnvironmentPairingCredentialRejectedError(error)).toBe(true);
     if (!isPrimaryEnvironmentPairingCredentialRejectedError(error)) {

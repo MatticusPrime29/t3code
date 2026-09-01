@@ -153,6 +153,10 @@ describe("t3 pair", () => {
         const output = yield* captureStdout(runCli(["pair", "--base-dir", baseDir]));
 
         assert.include(output, `Pairing with pair-test (${origin})`);
+        assert.include(
+          output,
+          "Use this pairing link exactly once: open or scan it, or paste it into Add Environment, but not both.",
+        );
         assert.include(output, `Pairing URL: ${origin}/pair#token=`);
         assert.isTrue(output.includes("█") || output.includes("▀") || output.includes("▄"));
         // Loopback origins are not reachable from a phone; the output must say so.

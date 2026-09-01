@@ -76,7 +76,7 @@ export class PrimaryEnvironmentPairingCredentialRejectedError extends Schema.Tag
   },
 ) {
   override get message(): string {
-    return "Invalid pairing token. Check the token and try again.";
+    return "This pairing token is invalid, expired, or already used. Generate a new pairing link and try again.";
   }
 }
 

@@ -50,6 +50,7 @@ import {
   formatHostForUrl,
   isLoopbackHost,
   isWildcardHost,
+  PAIRING_LINK_USAGE_HINT,
   renderTerminalQrCode,
   resolveHeadlessConnectionString,
 } from "../startupAccess.ts";
@@ -182,6 +183,8 @@ export const formatPairOutput = (input: {
 }): string =>
   [
     `Pairing with ${input.serverLabel} (${input.origin}).`,
+    "",
+    PAIRING_LINK_USAGE_HINT,
     "",
     renderTerminalQrCode(input.pairingUrl),
     "",

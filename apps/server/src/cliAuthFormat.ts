@@ -2,6 +2,7 @@ import type { AuthClientMetadata, AuthClientSession, AuthPairingLink } from "@t3
 import * as DateTime from "effect/DateTime";
 
 import type { IssuedBearerSession, IssuedPairingLink } from "./auth/EnvironmentAuth.ts";
+import { PAIRING_LINK_USAGE_HINT } from "./startupAccess.ts";
 
 const newline = "\n";
 
@@ -62,6 +63,7 @@ export function formatIssuedPairingCredential(
       `Token: ${credential.credential}`,
       ...(pairUrl ? [`Pair URL: ${pairUrl}`] : []),
       `Expires at: ${credential.expiresAt}`,
+      ...(pairUrl ? [PAIRING_LINK_USAGE_HINT] : []),
     ].join(newline) + newline
   );
 }

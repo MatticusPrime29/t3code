@@ -168,6 +168,18 @@ export function mapRemoteEnvironmentError(
   }
 }
 
+export function mapRemotePairingError(error: RemoteEnvironmentAuthError): ConnectionAttemptError {
+  if (error._tag === "EnvironmentAuthInvalidError") {
+    return new ConnectionBlockedError({
+      reason: "authentication",
+      detail:
+        "The pairing code is invalid, expired, or already used. Generate a new pairing link, then paste it here without opening it first.",
+      traceId: error.traceId,
+    });
+  }
+  return mapRemoteEnvironmentError(error);
+}
+
 /**
  * Map an environment error from a request that used DPoP authentication. An
  * older environment server reports a DPoP clock failure as the same generic

@@ -2,7 +2,11 @@ import { EnvironmentAuthInvalidError } from "@t3tools/contracts";
 import { RelayAuthInvalidError } from "@t3tools/contracts/relay";
 import { describe, expect, it } from "@effect/vitest";
 
-import { mapManagedRelayError, mapRemoteDpopEnvironmentError } from "./errors.ts";
+import {
+  mapManagedRelayError,
+  mapRemoteDpopEnvironmentError,
+  mapRemotePairingError,
+} from "./errors.ts";
 import { DPOP_RETRY_HINT, DPOP_UNKNOWN_HINT } from "../relay/errorPresentation.ts";
 import { ManagedRelayRequestFailedError } from "../relay/managedRelay.ts";
 
@@ -71,5 +75,25 @@ describe("mapRemoteDpopEnvironmentError", () => {
     );
 
     expect(mapped.message).toBe(`The environment credential is invalid. ${DPOP_RETRY_HINT}`);
+  });
+});
+
+describe("mapRemotePairingError", () => {
+  it("explains that an invalid pairing code may have expired or already been used", () => {
+    const mapped = mapRemotePairingError(
+      new EnvironmentAuthInvalidError({
+        code: "auth_invalid",
+        reason: "invalid_credential",
+        traceId: "trace-pairing",
+      }),
+    );
+
+    expect(mapped).toMatchObject({
+      _tag: "ConnectionBlockedError",
+      reason: "authentication",
+      detail:
+        "The pairing code is invalid, expired, or already used. Generate a new pairing link, then paste it here without opening it first.",
+      traceId: "trace-pairing",
+    });
   });
 });

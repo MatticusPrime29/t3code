@@ -28,7 +28,7 @@ const CLIENT_PRESENTATION_LAYER = Layer.succeed(
 
 function pairingHttpLayer(
   calls: Array<{ readonly url: string; readonly init: RequestInit }>,
-  options?: { readonly failDescriptor?: boolean },
+  options?: { readonly failDescriptor?: boolean; readonly rejectPairingCode?: boolean },
 ) {
   const fetchFn = ((input, init = {}) => {
     const url = String(input);
@@ -57,6 +57,19 @@ function pairingHttpLayer(
     }
 
     if (url.endsWith("/oauth/token")) {
+      if (options?.rejectPairingCode === true) {
+        return Promise.resolve(
+          Response.json(
+            {
+              _tag: "EnvironmentAuthInvalidError",
+              code: "auth_invalid",
+              reason: "invalid_credential",
+              traceId: "trace-pairing",
+            },
+            { status: 401 },
+          ),
+        );
+      }
       return Promise.resolve(
         Response.json({
           access_token: "bearer-token",
@@ -115,6 +128,36 @@ describe("connection onboarding", () => {
       expect(tokenParams.get("subject_token")).toBe("pairing-token");
       expect(tokenParams.get("scope")).toBe(AuthStandardClientScopes.join(" "));
       expect(tokenParams.get("client_label")).toBe("T3 Code Test");
+    }),
+  );
+
+  it.effect("explains how to recover when a pairing code cannot be exchanged", () =>
+    Effect.gen(function* () {
+      const calls: Array<{ readonly url: string; readonly init: RequestInit }> = [];
+      const error = yield* preparePairingRegistration({
+        host: "remote.example.test",
+        pairingCode: "spent-pairing-token",
+      }).pipe(
+        Effect.provide(
+          Layer.mergeAll(
+            CLIENT_PRESENTATION_LAYER,
+            pairingHttpLayer(calls, { rejectPairingCode: true }),
+          ),
+        ),
+        Effect.flip,
+      );
+
+      expect(error).toMatchObject({
+        _tag: "ConnectionBlockedError",
+        reason: "authentication",
+        detail:
+          "The pairing code is invalid, expired, or already used. Generate a new pairing link, then paste it here without opening it first.",
+        traceId: "trace-pairing",
+      });
+      expect(calls.map((call) => call.url)).toEqual([
+        "https://remote.example.test/.well-known/t3/environment",
+        "https://remote.example.test/oauth/token",
+      ]);
     }),
   );
 
