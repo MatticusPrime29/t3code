@@ -57,7 +57,12 @@ export const EDITORS = [
   { id: "datagrip", label: "DataGrip", commands: ["datagrip"], launchStyle: "line-column" },
   { id: "dataspell", label: "DataSpell", commands: ["dataspell"], launchStyle: "line-column" },
   { id: "goland", label: "GoLand", commands: ["goland"], launchStyle: "line-column" },
-  { id: "phpstorm", label: "PhpStorm", commands: ["phpstorm"], launchStyle: "line-column" },
+  {
+    id: "phpstorm",
+    label: "PhpStorm",
+    commands: ["phpstorm64.exe", "phpstorm"],
+    launchStyle: "line-column",
+  },
   { id: "pycharm", label: "PyCharm", commands: ["pycharm"], launchStyle: "line-column" },
   { id: "rider", label: "Rider", commands: ["rider"], launchStyle: "line-column" },
   { id: "rubymine", label: "RubyMine", commands: ["rubymine"], launchStyle: "line-column" },

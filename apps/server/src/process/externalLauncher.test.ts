@@ -153,6 +153,48 @@ it.effect("launches an installed editor with platform-safe arguments", () =>
   }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
 );
 
+it.effect("launches PhpStorm through its native executable on Windows", () =>
+  Effect.gen(function* () {
+    const fileSystem = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+    const binDir = yield* fileSystem.makeTempDirectoryScoped({ prefix: "t3-editors-" });
+    yield* fileSystem.writeFileString(path.join(binDir, "phpstorm64.exe"), "");
+    yield* fileSystem.writeFileString(path.join(binDir, "phpstorm.BAT"), "@echo off\r\n");
+
+    const executablePath = "C:\\Program Files\\JetBrains\\PhpStorm\\bin\\phpstorm64.exe";
+    let spawned: ChildProcess.StandardCommand | undefined;
+    yield* Effect.gen(function* () {
+      const launcher = yield* ExternalLauncher.ExternalLauncher;
+      yield* launcher.launchEditor({
+        editor: "phpstorm",
+        cwd: "C:\\workspace with spaces\\src\\index.php:12:4",
+      });
+    }).pipe(
+      Effect.provide(
+        testLayer({
+          platform: "win32",
+          env: { PATH: binDir, PATHEXT: ".COM;.EXE;.BAT;.CMD" },
+          resolveExecutable: (command) => (command === "phpstorm64.exe" ? executablePath : command),
+          onSpawn: (command) => {
+            spawned = command;
+          },
+        }),
+      ),
+    );
+
+    assert.ok(spawned);
+    assert.equal(spawned.command, executablePath);
+    assert.deepEqual(spawned.args, [
+      "--line",
+      "12",
+      "--column",
+      "4",
+      "C:\\workspace with spaces\\src\\index.php",
+    ]);
+    assert.equal(spawned.options.shell, false);
+  }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
+);
+
 it.effect("reveals a file in Finder with open -R on macOS", () =>
   Effect.gen(function* () {
     const fileSystem = yield* FileSystem.FileSystem;
