@@ -216,6 +216,7 @@ export const make = Effect.gen(function* () {
       ...(Option.isSome(whisperResources) ? { voiceTranscription: true } : {}),
       pullRequests: true,
       threadSettlement: true,
+      threadAutoSettlement: true,
       threadSnooze: true,
       environmentThemes: true,
       threadPinning: true,
