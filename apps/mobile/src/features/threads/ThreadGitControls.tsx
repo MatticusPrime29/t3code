@@ -1,6 +1,7 @@
 import {
   EnvironmentId,
   type GitRunStackedActionResult,
+  type ProjectOriginalRepository,
   type ProjectScript,
   ThreadId,
   type VcsStatusResult,
@@ -84,6 +85,8 @@ export type ThreadGitMenuProps = {
   readonly currentBranch: string | null;
   readonly gitStatus: VcsStatusResult | null;
   readonly gitOperationLabel: string | null;
+  readonly originalRepository?: ProjectOriginalRepository | null;
+  readonly onPrepareOriginalMerge?: () => void;
   readonly onOpenFilesInspector?: () => void;
   readonly onOpenGitInspector?: () => void;
   readonly onPull: () => Promise<void>;
@@ -352,6 +355,20 @@ function useThreadGitHeaderActionItems(props: ThreadGitControlsProps): ThreadGit
               onPress: model.openReview,
               type: "action",
             },
+            ...(props.originalRepository && props.onPrepareOriginalMerge
+              ? [
+                  {
+                    description: "Add merge instructions to the composer",
+                    icon: {
+                      name: "arrow.triangle.merge",
+                      type: "sfSymbol" as const,
+                    },
+                    label: "Merge original",
+                    onPress: props.onPrepareOriginalMerge,
+                    type: "action" as const,
+                  },
+                ]
+              : []),
             {
               description: "Commit, files, branches",
               icon: { name: "ellipsis", type: "sfSymbol" },
@@ -383,7 +400,9 @@ function useThreadGitHeaderActionItems(props: ThreadGitControlsProps): ThreadGit
       props.gitStatus,
       props.onOpenNewTerminal,
       props.onOpenTerminal,
+      props.onPrepareOriginalMerge,
       props.onRunProjectScript,
+      props.originalRepository,
       props.projectScripts,
       props.terminalSessions,
     ],
@@ -530,6 +549,15 @@ export function ThreadGitMenu(props: ThreadGitMenuProps) {
       >
         <NativeHeaderToolbar.Label>Review changes</NativeHeaderToolbar.Label>
       </NativeHeaderToolbar.MenuAction>
+      {props.originalRepository && props.onPrepareOriginalMerge ? (
+        <NativeHeaderToolbar.MenuAction
+          icon="arrow.triangle.merge"
+          onPress={props.onPrepareOriginalMerge}
+          subtitle="Add merge instructions to the composer"
+        >
+          <NativeHeaderToolbar.Label>Merge original</NativeHeaderToolbar.Label>
+        </NativeHeaderToolbar.MenuAction>
+      ) : null}
       <NativeHeaderToolbar.MenuAction
         icon="ellipsis"
         onPress={model.openGitInspector}

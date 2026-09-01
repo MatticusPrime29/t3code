@@ -15,6 +15,7 @@ import {
 import type {
   ContextMenuItem,
   ModelSelection,
+  ProjectOriginalRepository,
   ProviderDriverKind,
   SidebarProjectGroupingMode,
   T3ProjectFileScript,
@@ -114,6 +115,7 @@ import {
   ProjectFaviconPickerDialog,
 } from "./ProjectFaviconPickerDialog";
 import { projectGroupTitleNeedsUpdate } from "./ProjectSettingsPanel.logic";
+import { validateConfiguredOriginalRepository } from "../../lib/originalRepository";
 
 export const PROJECT_GROUPING_MODE_LABELS: Record<SidebarProjectGroupingMode, string> = {
   repository: "Group by repository",
@@ -365,6 +367,7 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
         defaultModelSelection: ModelSelection | null;
         defaultThreadEnvMode: ThreadEnvMode | null;
         faviconPath: string | null;
+        originalRepository: ProjectOriginalRepository | null;
       }>,
       failureTitle: string,
     ): Promise<AtomCommandResult<void, unknown>> => {
@@ -466,6 +469,68 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
       }
     },
     [updateAllMembers],
+  );
+
+  // ----- original repository -----
+  const originalRepository = representative.originalRepository ?? null;
+  const [isSavingOriginalRepository, setIsSavingOriginalRepository] = useState(false);
+  const clearOriginalRepository = useCallback(async () => {
+    setIsSavingOriginalRepository(true);
+    try {
+      await updateAllMembers(
+        { originalRepository: null },
+        "Failed to disconnect original repository",
+      );
+    } finally {
+      setIsSavingOriginalRepository(false);
+    }
+  }, [updateAllMembers]);
+  const saveOriginalRepository = useCallback(
+    async (input: HTMLInputElement) => {
+      const remoteUrl = input.value.trim();
+      if (!remoteUrl) {
+        if (originalRepository?.source === "configured") {
+          await clearOriginalRepository();
+        }
+        return;
+      }
+      if (
+        originalRepository?.source === "configured" &&
+        remoteUrl === originalRepository.remoteUrl
+      ) {
+        return;
+      }
+      const validation = validateConfiguredOriginalRepository(
+        representative.repositoryIdentity,
+        remoteUrl,
+      );
+      if (!validation.ok) {
+        input.value =
+          originalRepository?.source === "configured" ? originalRepository.remoteUrl : "";
+        toastManager.add({
+          type: "warning",
+          title: "Original repository is not compatible",
+          description: validation.message,
+        });
+        return;
+      }
+
+      setIsSavingOriginalRepository(true);
+      try {
+        await updateAllMembers(
+          { originalRepository: validation.repository },
+          "Failed to connect original repository",
+        );
+      } finally {
+        setIsSavingOriginalRepository(false);
+      }
+    },
+    [
+      clearOriginalRepository,
+      originalRepository,
+      representative.repositoryIdentity,
+      updateAllMembers,
+    ],
   );
 
   // ----- checkout selection and scripts -----
@@ -825,6 +890,41 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
                   Choose file
                 </Button>
               </div>
+            }
+          />
+          <SettingsRow
+            title="Original repository"
+            description={
+              originalRepository?.source === "detected"
+                ? "Detected from this checkout's upstream Git remote."
+                : "Connect this fork to its original repository to enable merge preparation in chats."
+            }
+            resetAction={
+              originalRepository?.source === "configured" ? (
+                <SettingResetButton
+                  label="original repository"
+                  disabled={isSavingOriginalRepository}
+                  onClick={() => void clearOriginalRepository()}
+                />
+              ) : null
+            }
+            control={
+              <Input
+                key={`${originalRepository?.source ?? "none"}:${originalRepository?.remoteUrl ?? ""}`}
+                className="w-full sm:w-80"
+                aria-label="Original repository URL"
+                placeholder="https://github.com/owner/repository"
+                defaultValue={originalRepository?.remoteUrl ?? ""}
+                disabled={isSavingOriginalRepository || originalRepository?.source === "detected"}
+                onBlur={(event) => {
+                  if (originalRepository?.source !== "detected") {
+                    void saveOriginalRepository(event.currentTarget);
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") event.currentTarget.blur();
+                }}
+              />
             }
           />
         </SettingsSection>

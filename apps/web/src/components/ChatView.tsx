@@ -230,6 +230,7 @@ import {
   preventTerminalCloseShortcut,
 } from "../lib/terminalCloseShortcut";
 import { resolveNewDraftStartFromOrigin } from "../lib/chatThreadActions";
+import { buildMergeOriginalPrompt } from "../lib/originalRepository";
 import {
   derivePhysicalProjectKey,
   deriveLogicalProjectKeyFromSettings,
@@ -3146,6 +3147,22 @@ function ChatViewContent(props: ChatViewProps) {
     },
     [composerRef, scheduleComposerFocus],
   );
+  const prepareOriginalRepositoryMerge = useCallback(() => {
+    const originalRepository = activeProject?.originalRepository;
+    const composer = composerRef.current;
+    if (!originalRepository || !composer) return;
+
+    const prompt = buildMergeOriginalPrompt(originalRepository);
+    if (!composer.insertTextAtEnd(prompt, { ensureLeadingBoundary: true })) {
+      toastManager.add({
+        type: "error",
+        title: "Unable to prepare merge",
+        description: "The composer is busy; try again once it is ready.",
+      });
+      return;
+    }
+    scheduleComposerFocus();
+  }, [activeProject?.originalRepository, composerRef, scheduleComposerFocus]);
   const addTerminalContextToDraft = useCallback(
     (selection: TerminalContextSelection) => {
       composerRef.current?.addTerminalContext(selection);
@@ -7178,6 +7195,7 @@ function ChatViewContent(props: ChatViewProps) {
             activeProjectFaviconPath={activeProject?.faviconPath ?? null}
             openInCwd={gitCwd}
             activeProjectScripts={activeProject?.scripts}
+            originalRepository={activeProject?.originalRepository ?? null}
             preferredScriptId={
               activeProject ? (lastInvokedScriptByProjectId[activeProject.id] ?? null) : null
             }
@@ -7187,6 +7205,7 @@ function ChatViewContent(props: ChatViewProps) {
             gitCwd={gitCwd}
             onNewThreadInProject={handleNewThreadInActiveProject}
             onRunProjectScript={runProjectScript}
+            onPrepareOriginalMerge={prepareOriginalRepositoryMerge}
             onAddProjectScript={saveProjectScript}
             onUpdateProjectScript={updateProjectScript}
             onDeleteProjectScript={deleteProjectScript}

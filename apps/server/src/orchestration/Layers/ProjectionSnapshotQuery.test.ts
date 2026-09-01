@@ -273,6 +273,7 @@ projectionSnapshotLayer("ProjectionSnapshotQuery", (it) => {
           title: "Project 1",
           workspaceRoot: "/tmp/project-1",
           repositoryIdentity: null,
+          originalRepository: null,
           defaultModelSelection: {
             instanceId: ProviderInstanceId.make("codex"),
             model: "gpt-5-codex",
@@ -400,6 +401,7 @@ projectionSnapshotLayer("ProjectionSnapshotQuery", (it) => {
           title: "Project 1",
           workspaceRoot: "/tmp/project-1",
           repositoryIdentity: null,
+          originalRepository: null,
           defaultModelSelection: {
             instanceId: ProviderInstanceId.make("codex"),
             model: "gpt-5-codex",
@@ -1869,7 +1871,7 @@ it.effect(
                 canonicalKey: `github.com/acme${cwd}`,
                 locator: {
                   source: "git-remote" as const,
-                  remoteName: "origin",
+                  remoteName: "upstream",
                   remoteUrl: `https://github.com/acme${cwd}.git`,
                 },
                 rootPath: cwd,
@@ -1938,6 +1940,11 @@ it.effect(
       assert.equal(shellSnapshot.projects.length, 2);
       assert.equal(shellSnapshot.projects[0]?.repositoryIdentity?.rootPath, "/tmp/shared-root");
       assert.equal(shellSnapshot.projects[1]?.repositoryIdentity?.rootPath, "/tmp/shared-root");
+      assert.deepStrictEqual(shellSnapshot.projects[0]?.originalRepository, {
+        remoteName: "upstream",
+        remoteUrl: "https://github.com/acme/tmp/shared-root.git",
+        source: "detected",
+      });
 
       resolveCalls.length = 0;
 

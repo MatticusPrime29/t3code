@@ -2,6 +2,7 @@ import {
   type EnvironmentId,
   type EditorId,
   type ProjectScript,
+  type ProjectOriginalRepository,
   type ResolvedKeybindingsConfig,
   type ThreadId,
 } from "@t3tools/contracts";
@@ -11,7 +12,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import type { ChangeRequestSettleSource } from "@t3tools/client-runtime/state/thread-settled";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, GitMergeIcon } from "lucide-react";
 import {
   memo,
   useCallback,
@@ -45,6 +46,7 @@ import {
   WorkspaceBreadcrumbSeparator,
 } from "../WorkspaceBreadcrumb";
 import { cn } from "~/lib/utils";
+import { Button } from "../ui/button";
 
 interface ChatHeaderProps {
   activeThreadEnvironmentId: EnvironmentId;
@@ -60,6 +62,7 @@ interface ChatHeaderProps {
   activeProjectFaviconPath: string | null;
   openInCwd: string | null;
   activeProjectScripts: ReadonlyArray<ProjectScript> | undefined;
+  originalRepository: ProjectOriginalRepository | null;
   preferredScriptId: string | null;
   keybindings: ResolvedKeybindingsConfig;
   availableEditors: ReadonlyArray<EditorId>;
@@ -68,6 +71,7 @@ interface ChatHeaderProps {
   readonly onOpenPullRequest?: ((number: number) => void) | undefined;
   onNewThreadInProject: () => void;
   onRunProjectScript: (script: ProjectScript) => void;
+  onPrepareOriginalMerge: () => void;
   onAddProjectScript: (input: NewProjectScriptInput) => Promise<ProjectScriptActionResult>;
   onUpdateProjectScript: (
     scriptId: string,
@@ -129,6 +133,7 @@ export const ChatHeader = memo(function ChatHeader({
   activeProjectFaviconPath,
   openInCwd,
   activeProjectScripts,
+  originalRepository,
   preferredScriptId,
   keybindings,
   availableEditors,
@@ -137,6 +142,7 @@ export const ChatHeader = memo(function ChatHeader({
   onOpenPullRequest,
   onNewThreadInProject,
   onRunProjectScript,
+  onPrepareOriginalMerge,
   onAddProjectScript,
   onUpdateProjectScript,
   onDeleteProjectScript,
@@ -395,6 +401,25 @@ export const ChatHeader = memo(function ChatHeader({
             onDeleteScript={onDeleteProjectScript}
           />
         )}
+        {originalRepository ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="xs"
+                  variant="outline"
+                  type="button"
+                  aria-label="Prepare original repository merge"
+                  onClick={onPrepareOriginalMerge}
+                />
+              }
+            >
+              <GitMergeIcon className="size-3.5" />
+              <span className="hidden @5xl/header-actions:inline">Merge original</span>
+            </TooltipTrigger>
+            <TooltipPopup side="top">Prepare a merge from the original repository</TooltipPopup>
+          </Tooltip>
+        ) : null}
         {showOpenInPicker && (
           <OpenInPicker
             environmentId={activeThreadEnvironmentId}

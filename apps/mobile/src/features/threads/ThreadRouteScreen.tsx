@@ -13,6 +13,7 @@ import {
   threadHasOlderTurns,
 } from "@t3tools/client-runtime/state/threads";
 import { projectScriptCwd, projectScriptRuntimeEnv } from "@t3tools/shared/projectScripts";
+import { buildMergeOriginalPrompt } from "@t3tools/client-runtime/original-repository";
 import { Platform, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useWorkspaceState } from "../../state/workspace";
@@ -608,6 +609,17 @@ function ThreadRouteContent(
       terminalMenuSessions,
     ],
   );
+  const handlePrepareOriginalMerge = useCallback(() => {
+    const originalRepository = selectedThreadProject?.originalRepository;
+    if (!originalRepository) return;
+    const existing = composer.draftMessage.trimEnd();
+    const prompt = buildMergeOriginalPrompt(originalRepository);
+    composer.onChangeDraftMessage(existing ? `${existing}\n\n${prompt}` : prompt);
+  }, [
+    composer.draftMessage,
+    composer.onChangeDraftMessage,
+    selectedThreadProject?.originalRepository,
+  ]);
   const threadGitControlProps = {
     environmentId: environmentIdRaw ?? "",
     threadId: threadId ?? "",
@@ -624,6 +636,7 @@ function ThreadRouteContent(
     currentBranch: selectedThread?.branch ?? null,
     gitStatus: gitStatus.data,
     gitOperationLabel: gitState.gitOperationLabel,
+    originalRepository: selectedThreadProject?.originalRepository ?? null,
     canOpenTerminal: Boolean(selectedThreadProject?.workspaceRoot),
     canOpenFiles: Boolean(selectedThreadProject?.workspaceRoot),
     projectScripts: selectedThreadProject?.scripts ?? [],
@@ -632,6 +645,7 @@ function ThreadRouteContent(
     onOpenTerminal: handleOpenTerminal,
     onOpenNewTerminal: handleOpenNewTerminal,
     onRunProjectScript: handleRunProjectScript,
+    onPrepareOriginalMerge: handlePrepareOriginalMerge,
     onPull: gitActions.onPullSelectedThreadBranch,
     onRunAction: gitActions.onRunSelectedThreadGitAction,
   };
@@ -703,6 +717,13 @@ function ThreadRouteContent(
         onPress: () => handleOpenTerminal(null),
       });
     }
+    if (selectedThreadProject?.originalRepository) {
+      actions.push({
+        accessibilityLabel: "Prepare original repository merge",
+        icon: "arrow.triangle.merge",
+        onPress: handlePrepareOriginalMerge,
+      });
+    }
     actions.push({
       accessibilityLabel: "Open git controls",
       icon: "point.topleft.down.curvedto.point.bottomright.up",
@@ -721,10 +742,12 @@ function ThreadRouteContent(
     handleOpenFilesInspector,
     handleOpenTerminal,
     handleOpenGitInspector,
+    handlePrepareOriginalMerge,
     handleToggleInspector,
     props.onReturnToThread,
     selectedThreadCwd,
     selectedThreadProject?.workspaceRoot,
+    selectedThreadProject?.originalRepository,
   ]);
 
   // Deep links / cold starts land with Thread as the ONLY route, where the
