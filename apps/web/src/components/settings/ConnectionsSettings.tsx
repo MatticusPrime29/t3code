@@ -623,10 +623,10 @@ const PairingLinkListRow = memo(function PairingLinkListRow({
               : "Pairing code copied",
         description:
           kind === "hosted-link"
-            ? "Open it in the browser on the device you want to connect."
+            ? "Use it once: open it, or paste it into Add Environment, but not both."
             : kind === "link"
-              ? "Open it in the client you want to pair to this environment."
-              : "Paste it into another client to finish pairing.",
+              ? "Use it once: open it, or paste it into Add Environment, but not both."
+              : "Paste it into another client to finish pairing. Pairing codes are single-use.",
       });
     },
     onError: (error, { value, kind }) => {
@@ -2471,7 +2471,8 @@ export function ConnectionsSettings() {
       </div>
       <div>
         <span className="mt-1 block text-[11px] text-muted-foreground">
-          Paste a full pairing URL here to fill both fields automatically.
+          Pairing links are single-use. Paste a fresh full pairing URL here without opening it
+          first.
         </span>
       </div>
     </div>

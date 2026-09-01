@@ -2,9 +2,10 @@
 
 > For maintainers. Using T3 Code? See [voice input on iPhone](../user/composer.md#voice-input-on-iphone).
 
-Voice input produces editable composer text. The current implementation records on the client and
-transcribes locally with Apple's `SpeechAnalyzer` and `SpeechTranscriber` on supported iOS 26+
-devices. Environment-provided transcription and transcription on web and desktop are not implemented.
+Voice input produces editable composer text. Mobile records on the client and transcribes locally
+with Apple's `SpeechAnalyzer` and `SpeechTranscriber` on supported iOS 26+ devices. Web and desktop
+can record with `MediaRecorder` and send the temporary recording to a build-configured,
+OpenAI-compatible transcription endpoint.
 
 ## Current boundaries
 
@@ -26,7 +27,9 @@ management, waveform samples, and app and navigation lifecycle handling. It norm
 `@react-native-ai/apple` through `getLocalVoiceTranscriber()`, capturing the requested device locale
 and binding the prepared transcriber to Apple's resolved locale. The other-platform binding returns
 no local transcriber. That result describes the local implementation, not whether a client could use
-an environment's transcription service.
+an environment's transcription service. Web's [`useBrowserVoiceInput`][web-hook] supplies the same
+controller with browser microphone capture and the [`Speaches` adapter][web-transcriber]. Browsers
+choose Opus WebM, MP4, or Opus Ogg in that order according to `MediaRecorder` support.
 
 Mobile's [`voiceInputPresentation.ts`][presentation] maps shared state to toolbar labels and actions.
 Waveform and toolbar rendering stay in mobile. The composer edits draft text without selecting a
@@ -43,14 +46,20 @@ that work settles, ignores its result, and cleans up the recording.
 ## Ownership decisions
 
 The extension boundary distinguishes transcription on the client device from transcription through
-the composer's environment. These constraints apply when adding selectable transcription services:
+the composer's environment. A web build may also opt into one credential-free endpoint through
+`T3CODE_WHISPER_TRANSCRIPTION_URL`; the build system projects it to
+`VITE_WHISPER_TRANSCRIPTION_URL` and `EXPO_PUBLIC_WHISPER_TRANSCRIPTION_URL`. Because that URL is
+visible in the client bundle, it must never contain credentials. These constraints apply when adding
+selectable transcription services:
 
 - Local means the client device, regardless of which machine hosts the environment. A device's lack
   of local recognition does not prevent it from recording audio for an environment service.
 - Remote service configuration and API keys belong to the environment. The environment calls the
   external service. Clients receive service identifiers, labels, and availability information, never
-  credential values. Transcription services are independent of coding-agent `providerInstances`;
-  selecting OpenAI for transcription does not select Codex for the thread.
+  credential values. A credential-free web endpoint is the narrow exception above: the browser calls
+  it directly, and its server must enforce its own network boundary and CORS policy. Transcription
+  services are independent of coding-agent `providerInstances`; selecting OpenAI for transcription
+  does not select Codex for the thread.
 - The client owns its transcription preference, scoped by stable `environmentId`. Its choices are
   supported local recognition and the services exposed by the composer's environment. A service ID
   is meaningful only within that environment. Different clients can make different choices.
@@ -94,6 +103,8 @@ credentials, provider SDKs, or transport selection.
 [hook]: ../../apps/mobile/src/features/voice-input/useVoiceInputController.ts
 [presentation]: ../../apps/mobile/src/features/voice-input/voiceInputPresentation.ts
 [ios]: ../../apps/mobile/src/native/voiceTranscription.ios.ts
+[web-hook]: ../../apps/web/src/voice-input/useBrowserVoiceInput.ts
+[web-transcriber]: ../../apps/web/src/voice-input/speachesTranscriber.ts
 [settings]: ../../apps/server/src/serverSettings.ts
 [secrets]: ../../apps/server/src/auth/ServerSecretStore.ts
 [capabilities]: ../../packages/contracts/src/environment.ts

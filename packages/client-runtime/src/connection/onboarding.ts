@@ -22,7 +22,7 @@ import {
   SshConnectionRegistration,
 } from "./catalog.ts";
 import * as ConnectionCredentialStore from "./credentialStore.ts";
-import { mapRemoteEnvironmentError } from "./errors.ts";
+import { mapRemoteEnvironmentError, mapRemotePairingError } from "./errors.ts";
 import {
   BearerConnectionTarget,
   ConnectionBlockedError,
@@ -96,7 +96,7 @@ export const preparePairingRegistration = Effect.fn(
     credential: target.credential,
     scopes: presentation.scopes,
     clientMetadata: presentation.metadata,
-  }).pipe(Effect.mapError(mapRemoteEnvironmentError));
+  }).pipe(Effect.mapError(mapRemotePairingError));
   const connectionId = `bearer:${descriptor.environmentId}`;
 
   return new BearerConnectionRegistration({

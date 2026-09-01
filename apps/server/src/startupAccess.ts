@@ -13,6 +13,9 @@ export interface HeadlessServeAccessInfo {
   readonly pairingUrl: string;
 }
 
+export const PAIRING_LINK_USAGE_HINT =
+  "Use this pairing link exactly once: open or scan it, or paste it into Add Environment, but not both.";
+
 type NetworkInterfacesMap = ReturnType<typeof NodeOS.networkInterfaces>;
 
 export const isLoopbackHost = (host: string | undefined): boolean => {
@@ -125,6 +128,7 @@ export const formatHeadlessServeOutput = (accessInfo: HeadlessServeAccessInfo): 
     `Connection string: ${accessInfo.connectionString}`,
     `Token: ${accessInfo.token}`,
     `Pairing URL: ${accessInfo.pairingUrl}`,
+    PAIRING_LINK_USAGE_HINT,
     "",
     renderTerminalQrCode(accessInfo.pairingUrl),
     "",
