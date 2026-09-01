@@ -46,6 +46,7 @@ import {
 } from "./methods/window.ts";
 import * as PreviewIpc from "./methods/preview.ts";
 import { getWslState, setWslBackendEnabled, setWslDistro, setWslOnly } from "./methods/wsl.ts";
+import { prepareBundledVoiceTranscription } from "./methods/voiceTranscription.ts";
 
 export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers")(function* () {
   const ipc = yield* DesktopIpc.DesktopIpc;
@@ -56,6 +57,7 @@ export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers"
   yield* ipc.handleSync(getWindowFullscreenState);
   yield* ipc.handleSync(getLocalEnvironmentBootstraps);
   yield* ipc.handle(getLocalEnvironmentBearerToken);
+  yield* ipc.handle(prepareBundledVoiceTranscription);
 
   yield* ipc.handle(getClientSettings);
   yield* ipc.handle(setClientSettings);

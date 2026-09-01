@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { BrowserVoiceRecorder, selectBrowserRecordingMimeType } from "./browserRecorder";
+import {
+  BrowserVoiceRecorder,
+  browserVoiceRecordingAvailable,
+  selectBrowserRecordingMimeType,
+} from "./browserRecorder";
 
 class FakeMediaRecorder {
   static lastStartTimeslice: number | undefined;
@@ -46,6 +50,15 @@ afterEach(() => {
 });
 
 describe("BrowserVoiceRecorder", () => {
+  it("recognizes Electron's privileged desktop scheme as a trusted recording context", () => {
+    vi.stubGlobal("navigator", { mediaDevices: { getUserMedia: vi.fn() } });
+    vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
+    vi.stubGlobal("isSecureContext", false);
+
+    expect(browserVoiceRecordingAvailable()).toBe(false);
+    expect(browserVoiceRecordingAvailable({ trustedDesktopContext: true })).toBe(true);
+  });
+
   it("selects Opus WebM when the browser supports it", () => {
     vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
     expect(selectBrowserRecordingMimeType()).toBe("audio/webm;codecs=opus");

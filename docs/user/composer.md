@@ -102,16 +102,24 @@ only the normal message text when you submit the draft.
 
 ## Voice input on web and desktop
 
-When the T3 Code build has a speech-to-text endpoint configured, select the microphone beside the
-attachment button to begin recording. Select the stop control to transcribe, or cancel to discard the
-recording. The transcript is inserted at the cursor and remains editable; voice input never sends the
-message automatically.
+Select the microphone beside the attachment button to begin recording. Select the stop control to
+transcribe, or cancel to discard the recording. Desktop releases include the speech model and run
+transcription locally on your Mac, Windows, or Linux computer. A self-hosted T3 server can expose the
+same local transcription to its connected web clients. Neither path requires Docker, Python, or a
+separate Whisper installation, and transcription does not need an internet connection after the
+runtime has been installed.
 
-Web voice input requires microphone permission and a secure page, such as HTTPS or loopback
-development. Recordings can be up to five minutes long. The browser sends a temporary recording to
-the configured transcription service and removes its local blob after success, failure, or
-cancellation. The microphone control is hidden in builds without a configured endpoint or in browsers
-without `MediaRecorder` support.
+Standalone web builds can also show the control when their build has a speech-to-text endpoint
+configured. The transcript is inserted at the cursor and remains editable; voice input never sends
+the message automatically.
+
+Voice input requires microphone permission and browser `MediaRecorder` support. Standalone web voice
+input also requires a secure page, such as HTTPS or loopback development. Recordings can be up to five
+minutes long. T3 Code removes the temporary recording after success, failure, or cancellation. A web
+client connected to a server with local transcription sends the temporary recording to that
+environment over its authenticated connection; the environment runs Whisper on its host machine.
+Otherwise, a standalone web build sends it to its configured transcription service. The microphone
+control is hidden when neither option is available.
 
 ## Commands and skills
 

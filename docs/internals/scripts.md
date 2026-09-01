@@ -56,6 +56,10 @@ authenticated.
   web. Shared packages are consumed and bundled transitively rather than built separately.
 - `vp run build:desktop`: Builds the desktop pipeline (desktop plus server).
 - `vp run start`: Runs the production server (serves the built web app as static files).
+- `vp run stage:server-whisper`: Verifies/downloads the pinned Whisper.cpp inputs, compiles the host
+  executable, and stages it with the base model in `.t3/runtime/whisper`. Set
+  `T3CODE_WHISPER_RESOURCE_DIR` to that directory before starting the production server to advertise
+  and serve local voice transcription to connected web clients.
 - `vp check`: Vite+ format, lint, and type checks. This repo sets `typeCheck: false` in its lint
   options, so workspace type checking runs separately.
 - `vp run typecheck`: Strict TypeScript checks for all packages.

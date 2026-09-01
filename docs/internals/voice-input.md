@@ -3,8 +3,10 @@
 > For maintainers. Using T3 Code? See [voice input on iPhone](../user/composer.md#voice-input-on-iphone).
 
 Voice input produces editable composer text. Mobile records on the client and transcribes locally
-with Apple's `SpeechAnalyzer` and `SpeechTranscriber` on supported iOS 26+ devices. Web and desktop
-can record with `MediaRecorder` and send the temporary recording to a build-configured,
+with Apple's `SpeechAnalyzer` and `SpeechTranscriber` on supported iOS 26+ devices. Packaged desktop
+builds record with `MediaRecorder` and transcribe through their bundled Whisper.cpp service. A
+server started with staged Whisper resources exposes an authenticated transcription route to its web
+clients. A standalone web build can otherwise send its temporary recording to a build-configured,
 OpenAI-compatible transcription endpoint.
 
 ## Current boundaries
@@ -29,7 +31,31 @@ and binding the prepared transcriber to Apple's resolved locale. The other-platf
 no local transcriber. That result describes the local implementation, not whether a client could use
 an environment's transcription service. Web's [`useBrowserVoiceInput`][web-hook] supplies the same
 controller with browser microphone capture and the [`Speaches` adapter][web-transcriber]. Browsers
-choose Opus WebM, MP4, or Opus Ogg in that order according to `MediaRecorder` support.
+choose Opus WebM, MP4, or Opus Ogg in that order according to `MediaRecorder` support. In Electron,
+the preload bridge starts the bundled Whisper.cpp server on demand, refreshes its idle deadline for
+each transcription, and returns a randomized loopback-only request URL. The renderer decodes the
+browser recording and converts it to mono 16 kHz PCM WAV before upload. The desktop process stops the
+server after 15 minutes without use and when the application exits.
+
+The server uses the same process boundary when `T3CODE_WHISPER_RESOURCE_DIR` names a directory with
+the host's `whisper-server` executable and `ggml-base.bin`. It advertises the optional
+`voiceTranscription` environment capability only after both files are present. Web clients prefer
+the desktop bridge when available, then the connected environment's authenticated
+`/api/voice/transcriptions` route, then the credential-free build endpoint. The environment route
+accepts one recording up to 16 MB, launches a randomized loopback-only Whisper endpoint on demand,
+and stops it after 15 idle minutes or server shutdown. Bearer, cookie, and managed-relay DPoP
+connections use the same authorization preparation as other environment requests.
+
+The [desktop artifact builder][desktop-whisper-build] reads the pinned
+[Whisper manifest][whisper-manifest], verifies the source, model, and license checksums, and compiles
+a static Whisper.cpp server for the artifact's platform and architecture. The model and executable
+ship once as external Electron resources rather than being duplicated in `app.asar`. Release jobs
+cache those verified build inputs and outputs by platform, architecture, and manifest hash. macOS
+artifacts also declare their microphone purpose in the packaged `Info.plist`; building only the
+desktop JavaScript bundles neither stages Whisper nor replaces an already installed application.
+Source production launchers can run `vp run stage:server-whisper`, which stages the same verified
+host executable, model, and licenses under `.t3/runtime/whisper` without duplicating the model in the
+web or server JavaScript bundles.
 
 Mobile's [`voiceInputPresentation.ts`][presentation] maps shared state to toolbar labels and actions.
 Waveform and toolbar rendering stay in mobile. The composer edits draft text without selecting a
@@ -46,8 +72,8 @@ that work settles, ignores its result, and cleans up the recording.
 ## Ownership decisions
 
 The extension boundary distinguishes transcription on the client device from transcription through
-the composer's environment. A web build may also opt into one credential-free endpoint through
-`T3CODE_WHISPER_TRANSCRIPTION_URL`; the build system projects it to
+the composer's environment. A standalone web build may also opt into one credential-free endpoint
+through `T3CODE_WHISPER_TRANSCRIPTION_URL`; the build system projects it to
 `VITE_WHISPER_TRANSCRIPTION_URL` and `EXPO_PUBLIC_WHISPER_TRANSCRIPTION_URL`. Because that URL is
 visible in the client bundle, it must never contain credentials. These constraints apply when adding
 selectable transcription services:
@@ -105,6 +131,8 @@ credentials, provider SDKs, or transport selection.
 [ios]: ../../apps/mobile/src/native/voiceTranscription.ios.ts
 [web-hook]: ../../apps/web/src/voice-input/useBrowserVoiceInput.ts
 [web-transcriber]: ../../apps/web/src/voice-input/speachesTranscriber.ts
+[desktop-whisper-build]: ../../scripts/lib/desktop-whisper.ts
+[whisper-manifest]: ../../native/whisper/manifest.json
 [settings]: ../../apps/server/src/serverSettings.ts
 [secrets]: ../../apps/server/src/auth/ServerSecretStore.ts
 [capabilities]: ../../packages/contracts/src/environment.ts

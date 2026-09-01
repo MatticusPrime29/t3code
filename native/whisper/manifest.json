@@ -1,0 +1,11 @@
+{
+  "buildRevision": 3,
+  "sourceVersion": "v1.8.6",
+  "sourceUrl": "https://github.com/ggml-org/whisper.cpp/archive/refs/tags/v1.8.6.tar.gz",
+  "sourceSha256": "f8e632016ceae556f3132a16c7f704be1e7715595041f474fa81a2b64c1abf7c",
+  "modelFileName": "ggml-base.bin",
+  "modelUrl": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-base.bin",
+  "modelSha256": "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
+  "modelLicenseUrl": "https://raw.githubusercontent.com/openai/whisper/31243bad24cc746f07d4c8bfdd2d974872cb1803/LICENSE",
+  "modelLicenseSha256": "b5d65a59060e68c4ff940e1eddfa6f94b2d68fdf58ed7f4dd57721c997e35e9d"
+}

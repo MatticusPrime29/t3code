@@ -8,6 +8,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as PlatformError from "effect/PlatformError";
 import * as Schema from "effect/Schema";
+import { HostProcessPlatform } from "@t3tools/shared/hostProcess";
 
 import * as ServerSecretStore from "../auth/ServerSecretStore.ts";
 import {
@@ -16,6 +17,7 @@ import {
   RELAY_URL_SECRET,
 } from "../cloud/config.ts";
 import * as ServerConfig from "../config.ts";
+import { serverWhisperExecutableName } from "../voice/ServerWhisperResources.ts";
 import * as ServerEnvironment from "./ServerEnvironment.ts";
 
 const isServerEnvironmentIdPersistenceError = Schema.is(
@@ -169,6 +171,48 @@ it.layer(NodeServices.layer)("ServerEnvironmentLive", (it) => {
       expect(second.capabilities.threadTitleRegeneration).toBe(true);
       expect(second.capabilities.threadPullRequestLinking).toBe(true);
       expect(second.capabilities.agentActivityPublishing).toBe(false);
+    }),
+  );
+
+  it.effect("advertises voice transcription only when both local resources exist", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const baseDir = yield* fileSystem.makeTempDirectoryScoped({
+        prefix: "t3-server-environment-whisper-test-",
+      });
+      const resourceDir = yield* fileSystem.makeTempDirectoryScoped({
+        prefix: "t3-server-environment-whisper-resources-",
+      });
+      const config = yield* makeServerConfig(baseDir);
+      yield* ServerConfig.ensureServerDirectories(config);
+      const environmentLayer = ServerEnvironment.layer.pipe(
+        Layer.provide(
+          Layer.mergeAll(
+            emptySecretStoreLayer,
+            Layer.succeed(ServerConfig.ServerConfig, {
+              ...config,
+              whisperResourceDir: resourceDir,
+            }),
+            Layer.succeed(HostProcessPlatform, "linux"),
+          ),
+        ),
+      );
+      const descriptorWithoutResources = yield* Effect.gen(function* () {
+        const environment = yield* ServerEnvironment.ServerEnvironment;
+        return yield* environment.getDescriptor;
+      }).pipe(Effect.provide(environmentLayer));
+      expect(descriptorWithoutResources.capabilities.voiceTranscription).toBeUndefined();
+
+      yield* fileSystem.writeFileString(
+        `${resourceDir}/${serverWhisperExecutableName("linux")}`,
+        "binary",
+      );
+      yield* fileSystem.writeFileString(`${resourceDir}/ggml-base.bin`, "model");
+      const descriptorWithResources = yield* Effect.gen(function* () {
+        const environment = yield* ServerEnvironment.ServerEnvironment;
+        return yield* environment.getDescriptor;
+      }).pipe(Effect.provide(environmentLayer));
+      expect(descriptorWithResources.capabilities.voiceTranscription).toBe(true);
     }),
   );
 

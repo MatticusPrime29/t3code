@@ -16,12 +16,14 @@ import {
   attachmentUploadRouteLayer,
   serverEnvironmentHttpApiLayer,
   staticAndDevRouteLayer,
+  voiceTranscriptionRouteLayer,
   browserApiCorsLayer,
   httpCompressionLayer,
 } from "./http.ts";
 import { guardHttpResponseWriteErrors } from "./httpResponseErrorGuard.ts";
 import { fixPath } from "./os-jank.ts";
 import { websocketRpcRouteLayer } from "./ws.ts";
+import * as ServerWhisperServer from "./voice/ServerWhisperServer.ts";
 import * as TrelloService from "./trello/TrelloService.ts";
 import * as ExternalLauncher from "./process/externalLauncher.ts";
 import { pullRequestHttpApiLayer } from "./pullRequest/http.ts";
@@ -469,6 +471,7 @@ const PullRequestServiceLive = PullRequestService.layer.pipe(
 );
 
 const TrelloServiceLive = TrelloService.layer.pipe(Layer.provide(SqlitePersistenceLayerLive));
+const ServerWhisperServerLive = ServerWhisperServer.layer.pipe(Layer.provide(NetService.layer));
 
 export const makeRoutesLayer = Layer.mergeAll(
   Layer.mergeAll(
@@ -483,6 +486,7 @@ export const makeRoutesLayer = Layer.mergeAll(
     otlpTracesProxyRouteLayer,
     assetRouteLayer,
     attachmentUploadRouteLayer,
+    voiceTranscriptionRouteLayer.pipe(HttpRouter.provideRequest(ServerWhisperServerLive)),
     staticAndDevRouteLayer,
     websocketRpcRouteLayer,
   ),

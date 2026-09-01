@@ -9,6 +9,12 @@ const TRANSCRIPTION_LANGUAGE = "en";
 
 type Fetch = typeof globalThis.fetch;
 
+export interface SpeachesTranscriberOptions {
+  readonly language?: string;
+  readonly locale?: string;
+  readonly prepareRecording?: (recording: Blob, signal: AbortSignal) => Promise<Blob>;
+}
+
 function recordingExtension(contentType: string): string {
   if (contentType.includes("mp4") || contentType.includes("m4a")) return "m4a";
   if (contentType.includes("ogg")) return "ogg";
@@ -43,12 +49,14 @@ export function resolveSpeachesTranscriptionEndpoint(raw: string | undefined): s
 export function createSpeachesTranscriber(
   endpoint: string,
   fetchImpl: Fetch = globalThis.fetch,
+  options: SpeachesTranscriberOptions = {},
 ): VoiceTranscriber {
+  const language = options.language ?? TRANSCRIPTION_LANGUAGE;
   return {
     prepare: async ({ signal }) => {
       throwIfVoiceTranscriptionAborted(signal);
       return {
-        locale: TRANSCRIPTION_LANGUAGE,
+        locale: options.locale ?? language,
         transcribe: async (uri, { signal: transcriptionSignal }) => {
           try {
             throwIfVoiceTranscriptionAborted(transcriptionSignal);
@@ -56,17 +64,21 @@ export function createSpeachesTranscriber(
             if (!recordingResponse.ok) {
               throw transcriptionError("The browser recording could not be read.");
             }
-            const recording = await recordingResponse.blob();
+            let recording = await recordingResponse.blob();
             throwIfVoiceTranscriptionAborted(transcriptionSignal);
             if (recording.size === 0) {
               throw transcriptionError("The browser recording was empty.");
+            }
+            if (options.prepareRecording) {
+              recording = await options.prepareRecording(recording, transcriptionSignal);
+              throwIfVoiceTranscriptionAborted(transcriptionSignal);
             }
 
             const contentType = recording.type || "audio/webm";
             const form = new FormData();
             form.append("file", recording, `recording.${recordingExtension(contentType)}`);
             form.append("model", TRANSCRIPTION_MODEL);
-            form.append("language", TRANSCRIPTION_LANGUAGE);
+            form.append("language", language);
             form.append("response_format", "json");
 
             const response = await fetchImpl(endpoint, {

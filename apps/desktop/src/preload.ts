@@ -43,6 +43,8 @@ contextBridge.exposeInMainWorld("desktopBridge", {
     const result = ipcRenderer.sendSync(IpcChannels.GET_SYSTEM_LOCALE_CHANNEL);
     return typeof result === "string" ? result : null;
   },
+  prepareBundledVoiceTranscription: () =>
+    ipcRenderer.invoke(IpcChannels.PREPARE_BUNDLED_VOICE_TRANSCRIPTION_CHANNEL),
   getLocalEnvironmentBootstraps: () => {
     const result = ipcRenderer.sendSync(IpcChannels.GET_LOCAL_ENVIRONMENT_BOOTSTRAPS_CHANNEL);
     if (!Array.isArray(result)) {

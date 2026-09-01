@@ -23,6 +23,7 @@ import {
   HttpServerResponse,
   HttpServerRequest,
   HttpServerRespondable,
+  Multipart,
 } from "effect/unstable/http";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import { OtlpTracer } from "effect/unstable/observability";
@@ -45,11 +46,14 @@ import {
 } from "./auth/http.ts";
 import * as ServerEnvironment from "./environment/ServerEnvironment.ts";
 import { browserApiCorsAllowedHeaders, browserApiCorsAllowedMethods } from "./httpCors.ts";
+import * as ServerWhisperServer from "./voice/ServerWhisperServer.ts";
 
 const OTLP_TRACES_PROXY_PATH = "/api/observability/v1/traces";
 const LOOPBACK_HOSTNAMES = new Set(["127.0.0.1", "::1", "localhost"]);
 const DESKTOP_RENDERER_ORIGINS = ["t3code://app", "t3code-dev://app"];
 const SVG_CONTENT_SECURITY_POLICY = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+export const VOICE_TRANSCRIPTION_ROUTE = "/api/voice/transcriptions";
+const VOICE_TRANSCRIPTION_MAX_FILE_BYTES = 16 * 1024 * 1024;
 
 // Types a browser may render as a document if a proxy strips the disposition
 // header. Downloads of these fall back to octet-stream.
@@ -308,6 +312,59 @@ export const otlpTracesProxyRouteLayer = HttpRouter.add(
       EnvironmentInternalError: HttpServerRespondable.toResponse,
       EnvironmentScopeRequiredError: HttpServerRespondable.toResponse,
     }),
+  ),
+);
+
+export const handleVoiceTranscriptionRequest = Effect.fn("server.voice.handleTranscriptionRequest")(
+  function* () {
+    const request = yield* HttpServerRequest.HttpServerRequest;
+    const form = yield* request.multipart.pipe(
+      Effect.provideService(Multipart.MaxFileSize, VOICE_TRANSCRIPTION_MAX_FILE_BYTES),
+    );
+    const fileParts = form.file;
+    const file = Array.isArray(fileParts) ? fileParts[0] : undefined;
+    if (!Array.isArray(fileParts) || fileParts.length !== 1 || !Multipart.isPersistedFile(file)) {
+      return HttpServerResponse.text("One audio file is required.", { status: 400 });
+    }
+
+    const whisper = yield* ServerWhisperServer.ServerWhisperServer;
+    const fileSystem = yield* FileSystem.FileSystem;
+    const bytes = yield* fileSystem.readFile(file.path);
+    const transcript = yield* whisper.transcribe({
+      bytes,
+      contentType: file.contentType || "audio/wav",
+      fileName: file.name || "recording.wav",
+    });
+    if (Option.isNone(transcript)) {
+      return HttpServerResponse.text("Local voice transcription is unavailable.", { status: 503 });
+    }
+    return yield* HttpServerResponse.json({ text: transcript.value });
+  },
+);
+
+export const voiceTranscriptionRouteLayer = HttpRouter.add(
+  "POST",
+  VOICE_TRANSCRIPTION_ROUTE,
+  Effect.gen(function* () {
+    yield* authenticateRawRouteWithScope(AuthOrchestrationOperateScope);
+    return yield* handleVoiceTranscriptionRequest();
+  }).pipe(
+    Effect.catchTags({
+      EnvironmentAuthInvalidError: HttpServerRespondable.toResponse,
+      EnvironmentInternalError: HttpServerRespondable.toResponse,
+      EnvironmentScopeRequiredError: HttpServerRespondable.toResponse,
+      MultipartError: (error) =>
+        Effect.succeed(
+          HttpServerResponse.text("The voice recording is invalid or too large.", {
+            status: error.reason._tag === "FileTooLarge" ? 413 : 400,
+          }),
+        ),
+    }),
+    Effect.catchCause((cause) =>
+      Effect.logWarning("Voice transcription request failed.", { cause }).pipe(
+        Effect.as(HttpServerResponse.text("Local voice transcription failed.", { status: 502 })),
+      ),
+    ),
   ),
 );
 

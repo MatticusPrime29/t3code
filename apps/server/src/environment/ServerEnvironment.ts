@@ -9,6 +9,7 @@ import * as Crypto from "effect/Crypto";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 
@@ -19,6 +20,7 @@ import { resolveServerSelfUpdateCapability } from "../cloud/selfUpdate.ts";
 import { resolveServiceLauncherMode } from "../cloud/serviceLauncherClient.ts";
 import * as ServerConfig from "../config.ts";
 import * as ProcessRunner from "../processRunner.ts";
+import { resolveServerWhisperResourcePaths } from "../voice/ServerWhisperResources.ts";
 import { resolveServerEnvironmentLabel } from "./ServerEnvironmentLabel.ts";
 
 export class ServerEnvironmentIdPersistenceError extends Schema.TaggedErrorClass<ServerEnvironmentIdPersistenceError>()(
@@ -193,6 +195,10 @@ export const make = Effect.gen(function* () {
     desktopManaged: serverConfig.mode === "desktop",
     launcherManaged: launcher.managed,
   });
+  const whisperResources = yield* resolveServerWhisperResourcePaths(
+    serverConfig.whisperResourceDir,
+    hostPlatform,
+  ).pipe(Effect.orElseSucceed(() => Option.none()));
 
   const descriptor: ExecutionEnvironmentDescriptor = {
     environmentId,
@@ -207,6 +213,7 @@ export const make = Effect.gen(function* () {
       connectionProbe: true,
       attachmentUploads: true,
       fileAttachments: { maxUploadBytes: PROVIDER_SEND_TURN_MAX_FILE_BYTES },
+      ...(Option.isSome(whisperResources) ? { voiceTranscription: true } : {}),
       pullRequests: true,
       threadSettlement: true,
       threadSnooze: true,

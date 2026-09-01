@@ -2000,6 +2000,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     environmentUnavailable !== null ||
     pendingUserInputs.length > 0;
   const voiceInput = useBrowserVoiceInput({
+    environmentId,
     endpoint: configuredVoiceTranscriptionEndpoint,
     ownerKey: composerTargetKey(composerDraftTarget),
     draftMessage: prompt,

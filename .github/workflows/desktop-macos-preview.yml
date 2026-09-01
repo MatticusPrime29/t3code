@@ -61,6 +61,19 @@ jobs:
           path: native/resource-monitor/target/aarch64-apple-darwin/release/t3-resource-monitor
           key: resource-monitor-aarch64-apple-darwin-${{ hashFiles('native/resource-monitor/Cargo.lock', 'native/resource-monitor/Cargo.toml', 'native/resource-monitor/src/**') }}
 
+      - name: Cache bundled Whisper
+        id: whisper_cache
+        uses: actions/cache@v6
+        with:
+          path: native/whisper/target
+          key: desktop-whisper-mac-arm64-${{ hashFiles('native/whisper/manifest.json') }}
+
+      - name: Setup CMake
+        if: steps.whisper_cache.outputs.cache-hit != 'true'
+        uses: jwlawson/actions-setup-cmake@v2.2
+        with:
+          cmake-version: "4.1.x"
+
       - name: Setup Rust
         if: steps.resource_monitor_cache.outputs.cache-hit != 'true'
         uses: dtolnay/rust-toolchain@stable

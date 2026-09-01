@@ -23,6 +23,7 @@ import {
   createStagePatchedDependencies,
   createBuildConfig,
   DESKTOP_ELECTRON_LANGUAGES,
+  DESKTOP_MAC_EXTEND_INFO,
   DESKTOP_FILE_EXCLUSIONS,
   DESKTOP_EXTRA_RESOURCES,
   MAC_FILE_EXCLUSIONS,
@@ -546,6 +547,8 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
       "!apps/desktop/prod-resources/windows-server/**/*",
       "!apps/desktop/prod-resources/wsl-runtime.tar.gz",
       "!apps/desktop/prod-resources/wsl-runtime.tar.gz.sha256",
+      "!apps/desktop/prod-resources/whisper",
+      "!apps/desktop/prod-resources/whisper/**/*",
     ]);
     assert.equal(WINDOWS_SERVER_RESOURCE_SOURCE_DIR, "apps/desktop/prod-resources/windows-server");
     assert.deepStrictEqual(WINDOWS_SERVER_EXTRA_RESOURCES, [
@@ -605,20 +608,14 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
       assert.notProperty(linux, "asarUnpack");
       assert.notProperty(win, "asarUnpack");
       assert.deepStrictEqual(win.extraResources, [
-        {
-          from: "apps/desktop/prod-resources/resource-monitor",
-          to: "resource-monitor",
-        },
+        ...DESKTOP_EXTRA_RESOURCES,
         ...WINDOWS_SERVER_EXTRA_RESOURCES,
         ...WSL_RUNTIME_EXTRA_RESOURCES,
       ]);
       // No Linux prebuild means the sidecar staging never writes the archive,
       // so listing it here would fail the build on a missing source file.
       assert.deepStrictEqual(winWithoutWslPrebuild.extraResources, [
-        {
-          from: "apps/desktop/prod-resources/resource-monitor",
-          to: "resource-monitor",
-        },
+        ...DESKTOP_EXTRA_RESOURCES,
         ...WINDOWS_SERVER_EXTRA_RESOURCES,
       ]);
       assert.deepStrictEqual(win.nsis, { differentialPackage: true });
@@ -652,6 +649,14 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
         { name: "T3 Code", schemes: ["t3code", "t3code-dev"] },
       ]);
       assert.deepStrictEqual(mac.files, [...DESKTOP_FILE_EXCLUSIONS, ...MAC_FILE_EXCLUSIONS]);
+      assert.deepStrictEqual((mac.mac as Record<string, unknown>).extendInfo, {
+        NSMicrophoneUsageDescription:
+          "T3 Code uses the microphone to transcribe voice input locally on this Mac.",
+      });
+      assert.deepStrictEqual(DESKTOP_MAC_EXTEND_INFO, {
+        NSMicrophoneUsageDescription:
+          "T3 Code uses the microphone to transcribe voice input locally on this Mac.",
+      });
       assert.notProperty(mac.mac as Record<string, unknown>, "sign");
       for (const config of [linux, win]) {
         assert.deepStrictEqual(config.electronLanguages, DESKTOP_ELECTRON_LANGUAGES);
@@ -1440,11 +1445,15 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
     }).pipe(Effect.provide(ConfigProvider.layer(ConfigProvider.fromEnv({ env: {} })))),
   );
 
-  it("stages the resource monitor as an external executable resource", () => {
+  it("stages native desktop helpers as external executable resources", () => {
     assert.deepStrictEqual(DESKTOP_EXTRA_RESOURCES, [
       {
         from: "apps/desktop/prod-resources/resource-monitor",
         to: "resource-monitor",
+      },
+      {
+        from: "apps/desktop/prod-resources/whisper",
+        to: "whisper",
       },
     ]);
     assert.deepStrictEqual(resolveResourceMonitorRustTargets("mac", "universal"), [

@@ -40,6 +40,19 @@ describe("ExecutionEnvironmentDescriptor", () => {
     ).toBe(true);
   });
 
+  it("treats a missing voice transcription capability as unsupported", () => {
+    expect(decodeDescriptor(descriptor).capabilities.voiceTranscription).toBeUndefined();
+  });
+
+  it("preserves an advertised voice transcription capability", () => {
+    expect(
+      decodeDescriptor({
+        ...descriptor,
+        capabilities: { ...descriptor.capabilities, voiceTranscription: true },
+      }).capabilities.voiceTranscription,
+    ).toBe(true);
+  });
+
   it("preserves the server's generic attachment upload limit", () => {
     expect(
       decodeDescriptor({

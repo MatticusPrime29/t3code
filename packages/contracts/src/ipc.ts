@@ -1091,6 +1091,11 @@ export interface DesktopBridge {
    * regardless of OS settings.
    */
   getSystemLocale?: () => string | null;
+  /**
+   * Starts or refreshes the desktop shell's bundled Whisper service. Optional
+   * while older desktop shells host a newer web client.
+   */
+  prepareBundledVoiceTranscription?: () => Promise<string | null>;
   // One bootstrap per pool instance currently registered with bootstrap
   // info (omits instances whose backend hasn't produced a config yet).
   // The primary backend is identified by id === PRIMARY_LOCAL_ENVIRONMENT_ID.

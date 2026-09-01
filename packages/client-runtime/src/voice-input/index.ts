@@ -19,3 +19,7 @@ export {
   type VoiceTranscriptionErrorCode,
   type VoiceTranscriptionOptions,
 } from "./transcription.ts";
+export {
+  prepareEnvironmentVoiceRequest,
+  type PreparedEnvironmentVoiceRequest,
+} from "./environmentRequest.ts";

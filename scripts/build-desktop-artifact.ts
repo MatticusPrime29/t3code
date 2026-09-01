@@ -28,6 +28,7 @@ import {
   type WebAssetBrand,
 } from "./lib/brand-assets.ts";
 import { getDefaultBuildArch } from "./lib/build-target-arch.ts";
+import { DESKTOP_WHISPER_RESOURCE_DIRECTORY, stageDesktopWhisper } from "./lib/desktop-whisper.ts";
 import {
   findInlinedExternalPackages,
   selectCliRuntimeExternalDependencies,
@@ -37,6 +38,7 @@ import { resolveCatalogDependencies } from "./lib/resolve-catalog.ts";
 
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import * as NodeServices from "@effect/platform-node/NodeServices";
+import * as NodeHttpClient from "@effect/platform-node/NodeHttpClient";
 import * as Config from "effect/Config";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
@@ -794,6 +796,10 @@ interface StagePackageJson {
 
 export const STAGE_INSTALL_ARGS = ["install", "--prod"] as const;
 export const DESKTOP_ELECTRON_LANGUAGES = ["en-US"] as const;
+export const DESKTOP_MAC_EXTEND_INFO = {
+  NSMicrophoneUsageDescription:
+    "T3 Code uses the microphone to transcribe voice input locally on this Mac.",
+} as const;
 export const DESKTOP_FILE_EXCLUSIONS = [
   // T3 Code always passes the user's installed Claude executable to the SDK,
   // so the SDK's optional platform packages (each a ~200MB bundled executable)
@@ -806,6 +812,10 @@ export const DESKTOP_FILE_EXCLUSIONS = [
   "!apps/desktop/prod-resources/windows-server/**/*",
   "!apps/desktop/prod-resources/wsl-runtime.tar.gz",
   "!apps/desktop/prod-resources/wsl-runtime.tar.gz.sha256",
+  // Whisper ships as a directly executable extraResource. Its model is large,
+  // so keeping the staging directory in app.asar would nearly double its cost.
+  "!apps/desktop/prod-resources/whisper",
+  "!apps/desktop/prod-resources/whisper/**/*",
 ] as const;
 // Windows terminal helpers cannot run on macOS and slow signing and notarization.
 export const MAC_FILE_EXCLUSIONS = [
@@ -914,6 +924,10 @@ export const DESKTOP_EXTRA_RESOURCES = [
   {
     from: "apps/desktop/prod-resources/resource-monitor",
     to: "resource-monitor",
+  },
+  {
+    from: `apps/desktop/prod-resources/${DESKTOP_WHISPER_RESOURCE_DIRECTORY}`,
+    to: DESKTOP_WHISPER_RESOURCE_DIRECTORY,
   },
 ] as const;
 
@@ -2181,6 +2195,7 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       target: target === "dmg" ? [target, "zip"] : [target],
       icon: "icon.icns",
       category: "public.app-category.developer-tools",
+      extendInfo: DESKTOP_MAC_EXTEND_INFO,
       protocols: [
         {
           name: "T3 Code",
@@ -3098,6 +3113,13 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
     arch: options.arch,
     verbose: options.verbose,
   });
+  yield* stageDesktopWhisper({
+    repoRoot,
+    stageResourcesDir,
+    platform: options.platform,
+    arch: options.arch,
+    verbose: options.verbose,
+  });
 
   yield* assertPlatformBuildResources(
     options.platform,
@@ -3454,7 +3476,11 @@ const buildDesktopArtifactCli = Command.make("build-desktop-artifact", {
   Command.withHandler((input) => Effect.flatMap(resolveBuildOptions(input), buildDesktopArtifact)),
 );
 
-const cliRuntimeLayer = Layer.mergeAll(Logger.layer([Logger.consolePretty()]), NodeServices.layer);
+const cliRuntimeLayer = Layer.mergeAll(
+  Logger.layer([Logger.consolePretty()]),
+  NodeServices.layer,
+  NodeHttpClient.layerUndici,
+);
 
 if (import.meta.main) {
   Command.run(buildDesktopArtifactCli, { version: "0.0.0" }).pipe(

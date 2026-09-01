@@ -56,6 +56,8 @@ export const ExecutionEnvironmentCapabilities = Schema.Struct({
       maxUploadBytes: Schema.Int.check(Schema.isGreaterThanOrEqualTo(1)),
     }),
   ),
+  /** Server can transcribe browser microphone recordings with its local Whisper runtime. */
+  voiceTranscription: Schema.optionalKey(Schema.Boolean),
   /** Server exposes the pull-request list, detail, activity, diff, and mutation APIs. Absent on
       servers from before the pull-request workspace shipped, so clients must not probe them. */
   pullRequests: Schema.optionalKey(Schema.Boolean),

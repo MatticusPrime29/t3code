@@ -8,12 +8,14 @@ const RECORDING_MIME_TYPES = [
 
 const RECORDING_TIMESLICE_MS = 250;
 
-export function browserVoiceRecordingAvailable(): boolean {
+export function browserVoiceRecordingAvailable(options?: {
+  readonly trustedDesktopContext?: boolean;
+}): boolean {
   return (
     typeof MediaRecorder !== "undefined" &&
     typeof navigator !== "undefined" &&
     typeof navigator.mediaDevices?.getUserMedia === "function" &&
-    globalThis.isSecureContext !== false
+    (options?.trustedDesktopContext === true || globalThis.isSecureContext !== false)
   );
 }
 
@@ -37,10 +39,13 @@ export class BrowserVoiceRecorder implements VoiceRecorder {
   private stopPromise: Promise<void> | null = null;
   private resolveStop: (() => void) | null = null;
 
-  constructor(private readonly onStatus: (status: VoiceRecorderStatus) => void) {}
+  constructor(
+    private readonly onStatus: (status: VoiceRecorderStatus) => void,
+    private readonly trustedDesktopContext = false,
+  ) {}
 
   async requestPermission(): Promise<{ granted: boolean; canAskAgain: boolean }> {
-    if (!browserVoiceRecordingAvailable()) {
+    if (!browserVoiceRecordingAvailable({ trustedDesktopContext: this.trustedDesktopContext })) {
       return { granted: false, canAskAgain: false };
     }
 

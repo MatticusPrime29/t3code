@@ -1,18 +1,28 @@
 import {
+  prepareEnvironmentVoiceRequest,
   VoiceInputController,
   voiceInputBlocksSubmission,
   voiceInputFreezesEditor,
   type VoiceDraftSnapshot,
   type VoiceInputState,
 } from "@t3tools/client-runtime/voice-input";
+import { environmentEndpointUrl } from "@t3tools/client-runtime/environment";
+import type { EnvironmentId } from "@t3tools/contracts";
+import * as Option from "effect/Option";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { BrowserVoiceRecorder, browserVoiceRecordingAvailable } from "./browserRecorder";
+import { createBundledWhisperTranscriber } from "./bundledWhisperTranscriber";
+import { createEnvironmentWhisperTranscriber } from "./environmentWhisperTranscriber";
 import { createSpeachesTranscriber } from "./speachesTranscriber";
+import { runtime } from "../lib/runtime";
+import { useServerConfigs } from "../state/entities";
+import { usePreparedConnection } from "../state/session";
 
 const INITIAL_STATE: VoiceInputState = { phase: "idle", error: null, errorAction: null };
 
 export function useBrowserVoiceInput(input: {
+  readonly environmentId: EnvironmentId;
   readonly endpoint: string | null;
   readonly ownerKey: string;
   readonly draftMessage: string;
@@ -25,9 +35,48 @@ export function useBrowserVoiceInput(input: {
 }) {
   const [state, setState] = useState<VoiceInputState>(INITIAL_STATE);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const desktopBridge = typeof window === "undefined" ? undefined : window.desktopBridge;
+  const prepareBundledVoiceTranscription = desktopBridge?.prepareBundledVoiceTranscription;
+  const hasDesktopTranscriber = typeof prepareBundledVoiceTranscription === "function";
+  const preparedConnection = usePreparedConnection(input.environmentId);
+  const serverConfigs = useServerConfigs();
+  const supportsEnvironmentTranscription =
+    serverConfigs.get(input.environmentId)?.environment.capabilities.voiceTranscription === true;
+  const environmentConnection = Option.getOrNull(preparedConnection);
+  const environmentEndpoint =
+    supportsEnvironmentTranscription && environmentConnection
+      ? environmentEndpointUrl(environmentConnection.httpBaseUrl, "/api/voice/transcriptions")
+      : null;
   const transcriber = useMemo(
-    () => (input.endpoint ? createSpeachesTranscriber(input.endpoint) : null),
-    [input.endpoint],
+    () =>
+      hasDesktopTranscriber
+        ? createBundledWhisperTranscriber({
+            prepareEndpoint: prepareBundledVoiceTranscription,
+            getLocale: () => desktopBridge?.getSystemLocale?.() ?? null,
+          })
+        : environmentEndpoint && environmentConnection
+          ? createEnvironmentWhisperTranscriber({
+              endpoint: environmentEndpoint,
+              locale: navigator.language || "en",
+              prepareRequest: () =>
+                runtime.runPromise(
+                  prepareEnvironmentVoiceRequest({
+                    connection: environmentConnection,
+                    url: environmentEndpoint,
+                  }),
+                ),
+            })
+          : input.endpoint
+            ? createSpeachesTranscriber(input.endpoint)
+            : null,
+    [
+      desktopBridge,
+      environmentConnection,
+      environmentEndpoint,
+      hasDesktopTranscriber,
+      input.endpoint,
+      prepareBundledVoiceTranscription,
+    ],
   );
   const previousDraftRef = useRef({ ownerKey: input.ownerKey, text: input.draftMessage });
   const revisionRef = useRef(0);
@@ -46,7 +95,7 @@ export function useBrowserVoiceInput(input: {
   if (!recorderRef.current) {
     recorderRef.current = new BrowserVoiceRecorder((status) => {
       controllerRef.current?.handleRecorderStatus(status);
-    });
+    }, hasDesktopTranscriber);
   }
   const recorder = recorderRef.current;
 
@@ -118,7 +167,9 @@ export function useBrowserVoiceInput(input: {
   const cancel = useCallback(() => controller.cancel(), [controller]);
 
   return {
-    isAvailable: transcriber !== null && browserVoiceRecordingAvailable(),
+    isAvailable:
+      transcriber !== null &&
+      browserVoiceRecordingAvailable({ trustedDesktopContext: hasDesktopTranscriber }),
     state,
     elapsedSeconds,
     blocksSubmission: voiceInputBlocksSubmission(state),

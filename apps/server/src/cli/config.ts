@@ -105,6 +105,10 @@ const EnvServerConfig = Config.all({
   port: Config.port("T3CODE_PORT").pipe(Config.option, Config.map(Option.getOrUndefined)),
   host: Config.string("T3CODE_HOST").pipe(Config.option, Config.map(Option.getOrUndefined)),
   t3Home: Config.string("T3CODE_HOME").pipe(Config.option, Config.map(Option.getOrUndefined)),
+  whisperResourceDir: Config.string("T3CODE_WHISPER_RESOURCE_DIR").pipe(
+    Config.option,
+    Config.map(Option.getOrUndefined),
+  ),
   devUrl: Config.url("VITE_DEV_SERVER_URL").pipe(Config.option, Config.map(Option.getOrUndefined)),
   devAllowedOrigins: Config.string("T3CODE_DEV_ALLOWED_ORIGINS").pipe(
     Config.withDefault(""),
@@ -382,6 +386,7 @@ export const resolveServerConfig = (
       desktopTelemetryFd,
       desktopTelemetryControlFd,
       resourceMonitorPath,
+      whisperResourceDir: env.whisperResourceDir,
       autoBootstrapProjectFromCwd,
       logWebSocketEvents,
       tailscaleServeEnabled,
