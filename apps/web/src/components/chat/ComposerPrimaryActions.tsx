@@ -34,6 +34,7 @@ interface ComposerPrimaryActionsProps {
   onPreviousPendingQuestion: () => void;
   onInterrupt: () => void;
   onImplementPlanInNewThread: () => void;
+  onSendToEnvironment: () => void;
 }
 
 export const formatPendingPrimaryActionLabel = (input: {
@@ -75,6 +76,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   onPreviousPendingQuestion,
   onInterrupt,
   onImplementPlanInNewThread,
+  onSendToEnvironment,
 }: ComposerPrimaryActionsProps) {
   const pointerFocusProps = preserveComposerFocusOnPointerDown
     ? { onPointerDown: preventPointerFocus }
@@ -271,7 +273,31 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   );
 
   if (!isRunning) {
-    return sendButton;
+    return (
+      <div className="flex items-center gap-1">
+        <Menu>
+          <MenuTrigger
+            render={
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                className="rounded-full text-secondary-label"
+                aria-label="Send options"
+                {...pointerFocusProps}
+                disabled={isSendBusy || isConnecting || !promptHasText}
+              />
+            }
+          >
+            <ChevronDownIcon className="size-3.5" />
+          </MenuTrigger>
+          <MenuPopup align="end" side="top">
+            <MenuItem onClick={onSendToEnvironment}>Send to another environment...</MenuItem>
+          </MenuPopup>
+        </Menu>
+        {sendButton}
+      </div>
+    );
   }
 
   return (

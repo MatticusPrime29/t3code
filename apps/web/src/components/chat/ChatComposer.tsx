@@ -531,6 +531,7 @@ const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(
   onPreviousPendingQuestion: () => void;
   onInterrupt: () => void;
   onImplementPlanInNewThread: () => void;
+  onSendToEnvironment: () => void;
   onCompactContext?: (() => void) | undefined;
   compactDisabled: boolean;
   compactDisabledReason: string | null;
@@ -563,6 +564,7 @@ const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(
         onPreviousPendingQuestion={props.onPreviousPendingQuestion}
         onInterrupt={props.onInterrupt}
         onImplementPlanInNewThread={props.onImplementPlanInNewThread}
+        onSendToEnvironment={props.onSendToEnvironment}
       />
     </>
   );
@@ -710,6 +712,7 @@ export interface ChatComposerProps {
   onSend: (e?: { preventDefault: () => void }, intent?: ComposerSubmissionIntent) => void;
   onInterrupt: () => void;
   onImplementPlanInNewThread: () => void;
+  onSendToEnvironment: () => void;
   onRespondToApproval: (
     requestId: ApprovalRequestId,
     decision: ProviderApprovalDecision,
@@ -801,6 +804,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     onSend,
     onInterrupt,
     onImplementPlanInNewThread,
+    onSendToEnvironment,
     onRespondToApproval,
     onSelectActivePendingUserInputOption,
     onAdvanceActivePendingUserInput,
@@ -3585,6 +3589,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                             onPreviousPendingQuestion={onPreviousActivePendingUserInputQuestion}
                             onInterrupt={handleInterruptPrimaryAction}
                             onImplementPlanInNewThread={handleImplementPlanInNewThreadPrimaryAction}
+                            onSendToEnvironment={onSendToEnvironment}
                           />
                         ) : null}
                       </div>
@@ -4131,6 +4136,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                       onPreviousPendingQuestion={onPreviousActivePendingUserInputQuestion}
                       onInterrupt={handleInterruptPrimaryAction}
                       onImplementPlanInNewThread={handleImplementPlanInNewThreadPrimaryAction}
+                      onSendToEnvironment={onSendToEnvironment}
                     />
                   </div>
                 ) : null}
@@ -4327,6 +4333,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                     onPreviousPendingQuestion={onPreviousActivePendingUserInputQuestion}
                     onInterrupt={handleInterruptPrimaryAction}
                     onImplementPlanInNewThread={handleImplementPlanInNewThreadPrimaryAction}
+                    onSendToEnvironment={onSendToEnvironment}
                     compactDisabled={
                       compactDisabled || noProviderAvailable || isSendBusy || isConnecting
                     }

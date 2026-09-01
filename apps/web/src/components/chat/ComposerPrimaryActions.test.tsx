@@ -40,6 +40,7 @@ function renderPendingActions(isRunning: boolean) {
       onPreviousPendingQuestion: () => {},
       onInterrupt: () => {},
       onImplementPlanInNewThread: () => {},
+      onSendToEnvironment: () => {},
     }),
   );
 }
@@ -61,6 +62,7 @@ function renderStandaloneStop() {
       onPreviousPendingQuestion: () => {},
       onInterrupt: () => {},
       onImplementPlanInNewThread: () => {},
+      onSendToEnvironment: () => {},
     }),
   );
 }
@@ -83,6 +85,7 @@ function renderRunningActions(showSendWhileRunning: boolean, hasSendableContent:
       onPreviousPendingQuestion: () => {},
       onInterrupt: () => {},
       onImplementPlanInNewThread: () => {},
+      onSendToEnvironment: () => {},
     }),
   );
 }
@@ -104,6 +107,7 @@ function renderSendButton(sendDisabledReason: string | null = null) {
       onPreviousPendingQuestion: () => {},
       onInterrupt: () => {},
       onImplementPlanInNewThread: () => {},
+      onSendToEnvironment: () => {},
     }),
   );
 }
@@ -204,6 +208,13 @@ describe("formatPendingPrimaryActionLabel", () => {
 });
 
 describe("ComposerPrimaryActions", () => {
+  it("offers remote environment dispatch beside the normal send button", () => {
+    const markup = renderSendButton();
+
+    expect(markup).toContain('aria-label="Send options"');
+    expect(markup).toContain('aria-label="Send message"');
+  });
+
   it("disables and labels the send button while feedback is uploading", () => {
     const markup = renderSendButton("Sending feedback");
 

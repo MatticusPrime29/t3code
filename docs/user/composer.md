@@ -56,6 +56,13 @@ For Codex models that support it, new threads use **High** as the reasoning defa
 draft, project, or saved model selection still takes priority. Models without a High option use the
 default reported by Codex.
 
+## Send to another environment
+
+On web and desktop, open **Send options** beside the send button and choose **Send to another
+environment**. Select a connected environment, one of its projects, and a model available there.
+T3 Code creates a new thread in that environment, sends the current text prompt, and opens the new
+thread. Attachments and composer context stay in the current environment and are not copied.
+
 ## Notices above the composer
 
 On web and desktop, loading and syncing statuses fill the available banner width beside the

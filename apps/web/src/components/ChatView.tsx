@@ -294,6 +294,8 @@ import { ChatComposer, type ChatComposerHandle } from "./chat/ChatComposer";
 import { useTrelloThreadIntegration } from "./chat/useTrelloThreadIntegration";
 import { DraftHeroHeadline } from "./chat/DraftHeroHeadline";
 import { ExpandedImageDialog } from "./chat/ExpandedImageDialog";
+import { RemotePromptDialog } from "./chat/RemotePromptDialog";
+import { normalizeRemotePrompt } from "./chat/RemotePromptDialog.logic";
 import { PullRequestThreadDialog } from "./PullRequestThreadDialog";
 import { MessagesTimeline } from "./chat/MessagesTimeline";
 import { resolveTimelineIsAtEnd } from "./chat/MessagesTimeline.logic";
@@ -1520,6 +1522,7 @@ function ChatViewContent(props: ChatViewProps) {
   const [terminalFocusRequestId, setTerminalFocusRequestId] = useState(0);
   const [pullRequestDialogState, setPullRequestDialogState] =
     useState<PullRequestDialogState | null>(null);
+  const [remotePrompt, setRemotePrompt] = useState<string | null>(null);
   const [terminalUiLaunchContext, setTerminalUiLaunchContext] =
     useState<TerminalLaunchContext | null>(null);
   const [attachmentPreviewHandoffByMessageId, setAttachmentPreviewHandoffByMessageId] = useState<
@@ -6802,6 +6805,11 @@ function ChatViewContent(props: ChatViewProps) {
     composerRef,
   ]);
 
+  const onSendToEnvironment = useCallback(() => {
+    const prompt = normalizeRemotePrompt(composerRef.current?.getSendContext().prompt ?? "");
+    if (prompt !== null) setRemotePrompt(prompt);
+  }, [composerRef]);
+
   const getModelDisabledReason = useCallback(
     (instanceId: ProviderInstanceId, model: string): string | null => {
       if (!activeThread) {
@@ -7400,6 +7408,7 @@ function ChatViewContent(props: ChatViewProps) {
                             onSend={onSend}
                             onInterrupt={onInterrupt}
                             onImplementPlanInNewThread={onImplementPlanInNewThread}
+                            onSendToEnvironment={onSendToEnvironment}
                             onRespondToApproval={onRespondToApproval}
                             onSelectActivePendingUserInputOption={
                               onSelectActivePendingUserInputOption
@@ -7636,6 +7645,16 @@ function ChatViewContent(props: ChatViewProps) {
           onClose={closeExpandedImage}
         />
       )}
+      <RemotePromptDialog
+        open={remotePrompt !== null}
+        prompt={remotePrompt ?? ""}
+        sourceEnvironmentId={environmentId}
+        runtimeMode={runtimeMode}
+        interactionMode={interactionMode}
+        onOpenChange={(open) => {
+          if (!open) setRemotePrompt(null);
+        }}
+      />
       {trelloThread.updateDialog}
     </div>
   );
