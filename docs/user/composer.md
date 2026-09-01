@@ -35,6 +35,10 @@ On mobile, the model picker shows each OpenCode model's upstream provider, such 
 GitHub Copilot, or OpenCode Zen, beneath its name. Search by that provider name to narrow the list
 when starting a thread or changing an existing thread's model.
 
+For Codex models that support it, new threads use **High** as the reasoning default. An explicit
+draft, project, or saved model selection still takes priority. Models without a High option use the
+default reported by Codex.
+
 ## Notices above the composer
 
 On web and desktop, loading and syncing statuses fill the available banner width beside the
