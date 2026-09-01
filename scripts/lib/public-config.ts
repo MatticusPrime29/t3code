@@ -15,6 +15,7 @@ export interface T3CodePublicConfig {
   readonly relayClientOtlpTracesUrl: string | undefined;
   readonly relayClientOtlpTracesDataset: string | undefined;
   readonly relayClientOtlpTracesToken: string | undefined;
+  readonly whisperTranscriptionUrl: string | undefined;
 }
 
 type Environment = Readonly<Record<string, string | undefined>>;
@@ -100,6 +101,13 @@ export function loadRepoEnv({
           VITE_RELAY_OTLP_TRACES_TOKEN: config.relayClientOtlpTracesToken,
         }
       : {}),
+    ...(config.whisperTranscriptionUrl
+      ? {
+          T3CODE_WHISPER_TRANSCRIPTION_URL: config.whisperTranscriptionUrl,
+          VITE_WHISPER_TRANSCRIPTION_URL: config.whisperTranscriptionUrl,
+          EXPO_PUBLIC_WHISPER_TRANSCRIPTION_URL: config.whisperTranscriptionUrl,
+        }
+      : {}),
   };
 }
 
@@ -152,6 +160,12 @@ export function resolvePublicConfig(...sources: readonly Environment[]): T3CodeP
       sources,
       "T3CODE_RELAY_CLIENT_OTLP_TRACES_TOKEN",
       "VITE_RELAY_OTLP_TRACES_TOKEN",
+    ),
+    whisperTranscriptionUrl: firstNonEmpty(
+      sources,
+      "T3CODE_WHISPER_TRANSCRIPTION_URL",
+      "VITE_WHISPER_TRANSCRIPTION_URL",
+      "EXPO_PUBLIC_WHISPER_TRANSCRIPTION_URL",
     ),
   };
 }

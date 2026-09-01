@@ -39,6 +39,9 @@ describe("loadRepoEnv", () => {
     expect(env.VITE_RELAY_OTLP_TRACES_URL).toBeUndefined();
     expect(env.VITE_RELAY_OTLP_TRACES_DATASET).toBeUndefined();
     expect(env.VITE_RELAY_OTLP_TRACES_TOKEN).toBeUndefined();
+    expect(env.T3CODE_WHISPER_TRANSCRIPTION_URL).toBeUndefined();
+    expect(env.VITE_WHISPER_TRANSCRIPTION_URL).toBeUndefined();
+    expect(env.EXPO_PUBLIC_WHISPER_TRANSCRIPTION_URL).toBeUndefined();
   });
 
   it("applies process, root local, and root precedence in that order", () => {
@@ -100,6 +103,7 @@ describe("loadRepoEnv", () => {
       relayClientOtlpTracesUrl: undefined,
       relayClientOtlpTracesDataset: undefined,
       relayClientOtlpTracesToken: undefined,
+      whisperTranscriptionUrl: undefined,
     });
   });
 
@@ -143,6 +147,24 @@ describe("loadRepoEnv", () => {
       EXPO_PUBLIC_OTLP_TRACES_URL: "https://api.axiom.co/v1/traces",
       EXPO_PUBLIC_OTLP_TRACES_DATASET: "mobile-traces",
       EXPO_PUBLIC_OTLP_TRACES_TOKEN: "mobile-token",
+    });
+  });
+
+  it("projects one transcription URL to web and mobile builds", () => {
+    expect(
+      loadRepoEnv({
+        baseEnv: {
+          T3CODE_WHISPER_TRANSCRIPTION_URL:
+            "https://desktop.example.ts.net:8443/v1/audio/transcriptions",
+        },
+        repoRoot: makeTemporaryDirectory(),
+      }),
+    ).toEqual({
+      T3CODE_WHISPER_TRANSCRIPTION_URL:
+        "https://desktop.example.ts.net:8443/v1/audio/transcriptions",
+      VITE_WHISPER_TRANSCRIPTION_URL: "https://desktop.example.ts.net:8443/v1/audio/transcriptions",
+      EXPO_PUBLIC_WHISPER_TRANSCRIPTION_URL:
+        "https://desktop.example.ts.net:8443/v1/audio/transcriptions",
     });
   });
 });
