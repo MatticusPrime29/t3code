@@ -501,6 +501,42 @@ it.layer(NodeServices.layer)("providerMaintenance", (it) => {
     }),
   );
 
+  it.effect("disables one-click updates for bare commands that resolve to custom wrappers", () =>
+    Effect.gen(function* () {
+      const tempDir = yield* makeTempDir("t3-custom-wrapper-capabilities");
+      const binDir = NodePath.join(tempDir, "bin");
+      NodeFS.mkdirSync(binDir, { recursive: true });
+      const wrapperPath = NodePath.join(binDir, "package-tool");
+      NodeFS.writeFileSync(wrapperPath, "#!/bin/sh\n");
+      NodeFS.chmodSync(wrapperPath, 0o755);
+
+      const capabilities = yield* resolveProviderMaintenanceCapabilitiesEffect(packageToolUpdate, {
+        binaryPath: "package-tool",
+        env: {
+          PATH: binDir,
+        },
+      });
+
+      expect(capabilities).toEqual({
+        provider: driver("packageTool"),
+        packageName: "@example/package-tool",
+        update: null,
+      });
+    }),
+  );
+
+  it("does not treat a different npm package's binary as the managed package", () => {
+    expect(
+      packageToolUpdate.resolve({
+        binaryPath: "/opt/node/lib/node_modules/package-tool-darwin-arm64/bin/package-tool",
+      }),
+    ).toEqual({
+      provider: driver("packageTool"),
+      packageName: "@example/package-tool",
+      update: null,
+    });
+  });
+
   it.effect("uses Effect FileSystem realPath when detecting pnpm global symlinks", () =>
     Effect.gen(function* () {
       const tempDir = yield* makeTempDir("t3-pnpm-realpath-capabilities");

@@ -250,12 +250,15 @@ function isPnpmGlobalCommandPath(commandPath: string): boolean {
   );
 }
 
-function isNpmGlobalCommandPath(commandPath: string): boolean {
+function isNpmGlobalCommandPath(commandPath: string, packageName: string): boolean {
   const normalized = normalizeCommandPath(commandPath);
+  const normalizedPackageName = normalizeCommandPath(packageName);
+  const isExpectedPackage = normalized.includes(`/node_modules/${normalizedPackageName}/`);
   return (
-    normalized.includes("/node_modules/.bin/") ||
-    normalized.includes("/lib/node_modules/") ||
-    normalized.includes("/npm/node_modules/")
+    isExpectedPackage &&
+    (normalized.includes("/node_modules/.bin/") ||
+      normalized.includes("/lib/node_modules/") ||
+      normalized.includes("/npm/node_modules/"))
   );
 }
 
@@ -310,12 +313,21 @@ export function resolvePackageManagedProviderMaintenance(
     if (commandPaths.some(isPnpmGlobalCommandPath)) {
       return makePnpmGlobalProviderMaintenanceCapabilities(definition);
     }
-    if (commandPaths.some(isNpmGlobalCommandPath)) {
+    if (
+      commandPaths.some((commandPath) =>
+        isNpmGlobalCommandPath(commandPath, definition.npmPackageName),
+      )
+    ) {
       return makeNpmGlobalProviderMaintenanceCapabilities(definition);
     }
     if (commandPaths.some(isHomebrewCommandPath)) {
       return makeHomebrewProviderMaintenanceCapabilities(definition);
     }
+
+    return makeManualOnlyProviderMaintenanceCapabilities({
+      provider: definition.provider,
+      packageName: definition.npmPackageName,
+    });
   }
 
   if (!hasPathSeparator(binaryPath)) {
