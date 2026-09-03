@@ -49,7 +49,11 @@ it.effect("creates bearer and DPoP authorization for remote voice requests", () 
 
     const url = "https://relay.example.test/api/voice/transcriptions";
     const dpop = yield* prepareEnvironmentVoiceRequest({
-      connection: connection({ _tag: "Dpop", accessToken: "access-token" }),
+      connection: connection({
+        _tag: "Dpop",
+        accessToken: "access-token",
+        expiresAtEpochMs: Number.MAX_SAFE_INTEGER,
+      }),
       url,
     });
     expect(dpop).toEqual({
