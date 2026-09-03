@@ -216,7 +216,9 @@ export function projectEvent(
             originalRepository: payload.originalRepository ?? null,
             defaultModelSelection: payload.defaultModelSelection,
             defaultThreadEnvMode: null,
+            autoPull: false,
             faviconPath: payload.faviconPath ?? null,
+            projectIcon: payload.projectIcon ?? null,
             scripts: payload.scripts,
             createdAt: payload.createdAt,
             updatedAt: payload.updatedAt,
@@ -255,8 +257,12 @@ export function projectEvent(
                   ...(payload.originalRepository !== undefined
                     ? { originalRepository: payload.originalRepository }
                     : {}),
+                  ...(payload.autoPull !== undefined ? { autoPull: payload.autoPull } : {}),
                   ...(payload.faviconPath !== undefined
                     ? { faviconPath: payload.faviconPath }
+                    : {}),
+                  ...(payload.projectIcon !== undefined
+                    ? { projectIcon: payload.projectIcon }
                     : {}),
                   ...(payload.scripts !== undefined ? { scripts: payload.scripts } : {}),
                   updatedAt: payload.updatedAt,
