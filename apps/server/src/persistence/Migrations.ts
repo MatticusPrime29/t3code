@@ -62,6 +62,7 @@ import Migration0047 from "./Migrations/047_ProjectionProjectIcon.ts";
 import Migration0048 from "./Migrations/048_TrelloIntegration.ts";
 import Migration0049 from "./Migrations/049_ProjectionProjectOriginalRepository.ts";
 import Migration0050 from "./Migrations/050_ForkAutoPullCompat.ts";
+import Migration0051 from "./Migrations/051_ForkBranchPullRequestCompat.ts";
 
 /**
  * Migration loader with all migrations defined inline.
@@ -124,6 +125,7 @@ export const migrationEntries = [
   [48, "TrelloIntegration", Migration0048],
   [49, "ProjectionProjectOriginalRepository", Migration0049],
   [50, "ForkAutoPullCompat", Migration0050],
+  [51, "ForkBranchPullRequestCompat", Migration0051],
 ] as const;
 
 export const migrationManifest = migrationEntries.map(([id, name]) => [id, name] as const);
