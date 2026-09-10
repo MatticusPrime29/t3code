@@ -157,7 +157,7 @@ export const TrelloIntegrationErrorReason = Schema.Literals([
 ]);
 export type TrelloIntegrationErrorReason = typeof TrelloIntegrationErrorReason.Type;
 
-export class TrelloIntegrationError extends Schema.TaggedErrorClass<TrelloIntegrationError>()(
+export class TrelloIntegrationError extends Schema.TaggedError<TrelloIntegrationError>()(
   "TrelloIntegrationError",
   {
     reason: TrelloIntegrationErrorReason,

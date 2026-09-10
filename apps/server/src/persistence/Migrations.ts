@@ -63,6 +63,8 @@ import Migration0048 from "./Migrations/048_TrelloIntegration.ts";
 import Migration0049 from "./Migrations/049_ProjectionProjectOriginalRepository.ts";
 import Migration0050 from "./Migrations/050_ForkAutoPullCompat.ts";
 import Migration0051 from "./Migrations/051_ForkBranchPullRequestCompat.ts";
+import Migration0052 from "./Migrations/052_ForkActiveOrderKeyCompat.ts";
+import Migration0053 from "./Migrations/053_ForkThreadPullRequestsCompat.ts";
 
 /**
  * Migration loader with all migrations defined inline.
@@ -74,7 +76,7 @@ import Migration0051 from "./Migrations/051_ForkBranchPullRequestCompat.ts";
  * Uses Migrator.fromRecord which parses the key format and
  * returns migrations sorted by ID.
  */
-export const migrationEntries = [
+const migrationEntries = [
   [1, "OrchestrationEvents", Migration0001],
   [2, "OrchestrationCommandReceipts", Migration0002],
   [3, "CheckpointDiffBlobs", Migration0003],
@@ -126,11 +128,13 @@ export const migrationEntries = [
   [49, "ProjectionProjectOriginalRepository", Migration0049],
   [50, "ForkAutoPullCompat", Migration0050],
   [51, "ForkBranchPullRequestCompat", Migration0051],
+  [52, "ForkActiveOrderKeyCompat", Migration0052],
+  [53, "ForkThreadPullRequestsCompat", Migration0053],
 ] as const;
 
 export const migrationManifest = migrationEntries.map(([id, name]) => [id, name] as const);
 
-export const makeMigrationLoader = (throughId?: number) =>
+const makeMigrationLoader = (throughId?: number) =>
   Migrator.fromRecord(
     Object.fromEntries(
       migrationEntries

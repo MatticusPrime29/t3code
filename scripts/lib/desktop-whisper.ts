@@ -43,7 +43,7 @@ export function resolveDesktopWhisperCmakeArchitecture(
   return arch === "arm64" ? "arm64" : "x86_64";
 }
 
-export class DesktopWhisperDownloadError extends Schema.TaggedErrorClass<DesktopWhisperDownloadError>()(
+export class DesktopWhisperDownloadError extends Schema.TaggedError<DesktopWhisperDownloadError>()(
   "DesktopWhisperDownloadError",
   {
     url: Schema.String,
@@ -56,7 +56,7 @@ export class DesktopWhisperDownloadError extends Schema.TaggedErrorClass<Desktop
   }
 }
 
-export class DesktopWhisperChecksumError extends Schema.TaggedErrorClass<DesktopWhisperChecksumError>()(
+export class DesktopWhisperChecksumError extends Schema.TaggedError<DesktopWhisperChecksumError>()(
   "DesktopWhisperChecksumError",
   {
     filePath: Schema.String,
@@ -69,7 +69,7 @@ export class DesktopWhisperChecksumError extends Schema.TaggedErrorClass<Desktop
   }
 }
 
-export class DesktopWhisperBuildOutputMissingError extends Schema.TaggedErrorClass<DesktopWhisperBuildOutputMissingError>()(
+export class DesktopWhisperBuildOutputMissingError extends Schema.TaggedError<DesktopWhisperBuildOutputMissingError>()(
   "DesktopWhisperBuildOutputMissingError",
   {
     executablePath: Schema.String,
@@ -82,7 +82,7 @@ export class DesktopWhisperBuildOutputMissingError extends Schema.TaggedErrorCla
   }
 }
 
-export class DesktopWhisperBuildCommandError extends Schema.TaggedErrorClass<DesktopWhisperBuildCommandError>()(
+export class DesktopWhisperBuildCommandError extends Schema.TaggedError<DesktopWhisperBuildCommandError>()(
   "DesktopWhisperBuildCommandError",
   {
     command: Schema.String,
