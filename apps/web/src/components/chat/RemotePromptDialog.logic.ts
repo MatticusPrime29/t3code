@@ -4,7 +4,7 @@ import {
   deriveProviderInstanceEntries,
   isProviderInstancePickerReady,
 } from "../../providerInstances";
-import { stripInlineTerminalContextPlaceholders } from "../../lib/terminalContext";
+import { INLINE_TERMINAL_CONTEXT_PLACEHOLDER } from "../../lib/terminalContext";
 
 export interface RemotePromptModelOption {
   readonly key: string;
@@ -15,7 +15,7 @@ export interface RemotePromptModelOption {
 }
 
 export function normalizeRemotePrompt(prompt: string): string | null {
-  const normalized = stripInlineTerminalContextPlaceholders(prompt).trim();
+  const normalized = prompt.replaceAll(INLINE_TERMINAL_CONTEXT_PLACEHOLDER, "").trim();
   return normalized.length > 0 ? normalized : null;
 }
 

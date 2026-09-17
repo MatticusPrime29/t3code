@@ -5,6 +5,10 @@ import * as NodeSqliteClient from "@t3tools/shared/nodeSqliteClient";
 
 import { runMigrations } from "../Migrations.ts";
 import branchPullRequest from "./048_ProjectionThreadBranchPullRequest.ts";
+import trelloIntegration from "./048_TrelloIntegration.ts";
+import originalRepository from "./049_ProjectionProjectOriginalRepository.ts";
+import autoPullCompatibility from "./050_ForkAutoPullCompat.ts";
+import branchCompatibility from "./051_ForkBranchPullRequestCompat.ts";
 import activeOrderKey from "./049_ProjectionThreadsActiveOrderKey.ts";
 import compatibility from "./052_ForkActiveOrderKeyCompat.ts";
 
@@ -13,7 +17,19 @@ for (const history of ["fresh", "fork", "upstream"] as const) {
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient;
       if (history === "fork") {
-        yield* runMigrations({ toMigrationInclusive: 51 });
+        yield* runMigrations({ toMigrationInclusive: 47 });
+        yield* trelloIntegration;
+        yield* originalRepository;
+        yield* autoPullCompatibility;
+        yield* branchCompatibility;
+        yield* sql`
+          INSERT INTO effect_sql_migrations (migration_id, name)
+          VALUES
+            (48, 'TrelloIntegration'),
+            (49, 'ProjectionProjectOriginalRepository'),
+            (50, 'ForkAutoPullCompat'),
+            (51, 'ForkBranchPullRequestCompat')
+        `;
         yield* sql`
           INSERT INTO trello_thread_cards (card_id, thread_id, created_at)
           VALUES ('card-1', 'thread-1', '2026-09-08T00:00:00.000Z')

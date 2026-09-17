@@ -5,13 +5,26 @@ import * as NodeSqliteClient from "@t3tools/shared/nodeSqliteClient";
 
 import { runMigrations } from "../Migrations.ts";
 import branchPullRequest from "./048_ProjectionThreadBranchPullRequest.ts";
+import trelloIntegration from "./048_TrelloIntegration.ts";
+import originalRepository from "./049_ProjectionProjectOriginalRepository.ts";
+import autoPullCompatibility from "./050_ForkAutoPullCompat.ts";
 
 for (const history of ["fresh", "fork", "upstream"] as const) {
   it.effect(`upgrades ${history} migration history without losing fork data`, () =>
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient;
       if (history === "fork") {
-        yield* runMigrations({ toMigrationInclusive: 50 });
+        yield* runMigrations({ toMigrationInclusive: 47 });
+        yield* trelloIntegration;
+        yield* originalRepository;
+        yield* autoPullCompatibility;
+        yield* sql`
+          INSERT INTO effect_sql_migrations (migration_id, name)
+          VALUES
+            (48, 'TrelloIntegration'),
+            (49, 'ProjectionProjectOriginalRepository'),
+            (50, 'ForkAutoPullCompat')
+        `;
         yield* sql`
           INSERT INTO trello_thread_cards (card_id, thread_id, created_at)
           VALUES ('card-1', 'thread-1', '2026-09-06T00:00:00.000Z')
