@@ -54,5 +54,5 @@ it.effect("backfills pull request links after the fork migration history", () =>
       },
     ]);
     assert.deepEqual(yield* runMigrations(), []);
-  }).pipe(Effect.provide(NodeSqliteClient.layerMemory())),
+  }).pipe(Effect.provide(NodeSqliteClient.layer({ filename: ":memory:" }))),
 );

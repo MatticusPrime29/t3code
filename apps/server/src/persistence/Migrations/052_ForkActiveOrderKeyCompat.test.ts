@@ -69,6 +69,6 @@ for (const history of ["fresh", "fork", "upstream"] as const) {
         assert.deepEqual(rows, [{ active_order_key: "gm" }]);
       }
       assert.deepEqual(yield* runMigrations(), []);
-    }).pipe(Effect.provide(NodeSqliteClient.layerMemory())),
+    }).pipe(Effect.provide(NodeSqliteClient.layer({ filename: ":memory:" }))),
   );
 }

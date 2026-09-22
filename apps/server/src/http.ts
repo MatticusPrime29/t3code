@@ -1,4 +1,4 @@
-import Mime from "@effect/platform-node/Mime";
+import * as Mime from "effect/unstable/http/Mime";
 import {
   AuthOrchestrationOperateScope,
   AuthOrchestrationReadScope,
@@ -207,7 +207,10 @@ export const assetFileResponse = Effect.fn("assetFileResponse")(function* (
   }
   if (mediaFile && mediaInfo) {
     const size = bytesToRead ?? mediaInfo.size;
-    headers["Content-Type"] ??= Mime.getType(asset.path) ?? "application/octet-stream";
+    headers["Content-Type"] ??= Option.getOrElse(
+      Mime.getType(asset.path),
+      () => "application/octet-stream",
+    );
     headers["Content-Length"] = String(size);
     if (!isMedia) {
       headers["Last-Modified"] = mediaInfo.mtime.toUTCString();
@@ -323,7 +326,7 @@ export const otlpTracesProxyRouteLayer = HttpRouter.add(
     const request = yield* HttpServerRequest.HttpServerRequest;
     const config = yield* ServerConfig.ServerConfig;
     const otlpTracesUrl = config.otlpTracesUrl;
-    const otlpHeaders = config.otlpHeaders;
+    const otlpHeaders = config.otlpTracesExport.headers;
     const browserTraceCollector = yield* BrowserTraceCollector.BrowserTraceCollector;
     const httpClient = yield* HttpClient.HttpClient;
     const serialization = yield* OtlpSerialization.OtlpSerialization;
@@ -564,7 +567,7 @@ const streamStaticFile = (file: FileSystem.File, size: bigint) =>
     Effect.fnUntraced(function* (offset: bigint) {
       if (offset >= size) return;
       const remaining = size - offset;
-      const bytes = yield* file.readAlloc(remaining < 65_536n ? remaining : 65_536n);
+      const bytes = yield* file.readAlloc(Number(remaining < 65_536n ? remaining : 65_536n));
       if (Option.isNone(bytes)) return;
       return [bytes.value, offset + BigInt(bytes.value.byteLength)] as const;
     }),
@@ -640,7 +643,7 @@ const handleStaticAndDevRequest = Effect.fn("handleStaticAndDevRequest")(
       }
     }
     const fileInfo = opened.info;
-    const mimeType = Mime.getType(filePath) ?? "application/octet-stream";
+    const mimeType = Option.getOrElse(Mime.getType(filePath), () => "application/octet-stream");
     const isHtml = mimeType === "text/html";
 
     // A hash-like name is not enough: custom static files can use the same naming pattern.

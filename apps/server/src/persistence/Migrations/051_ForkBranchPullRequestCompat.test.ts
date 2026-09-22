@@ -47,6 +47,6 @@ for (const history of ["fresh", "fork", "upstream"] as const) {
       assert.deepEqual(cards, history === "fork" ? [{ card_id: "card-1" }] : []);
       const rerun = yield* runMigrations();
       assert.deepEqual(rerun, []);
-    }).pipe(Effect.provide(NodeSqliteClient.layerMemory())),
+    }).pipe(Effect.provide(NodeSqliteClient.layer({ filename: ":memory:" }))),
   );
 }
