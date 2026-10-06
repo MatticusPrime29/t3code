@@ -42,8 +42,10 @@ export const resolveEditorCommand = Effect.fn("editor.resolveEditorCommand")(fun
   const fs = yield* FileSystem.FileSystem;
   const home = env.HOME;
   const names = installNames[editor.id] ?? [editor.label];
-  const command = editor.commands[0];
   const jetbrains = editor.launchStyle === "line-column";
+  // PATH probes keep their platform-specific names; install layouts use the
+  // unsuffixed IDE name (phpstorm, not phpstorm64.exe).
+  const command = jetbrains ? editor.id : editor.commands[0];
   const candidates: string[] = [];
 
   if (platform === "darwin") {

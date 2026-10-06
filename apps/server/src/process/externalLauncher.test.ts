@@ -1022,6 +1022,12 @@ for (const { platform, installPath, editor, args } of [
   },
   {
     platform: "win32",
+    installPath: "Programs/JetBrains/PhpStorm 2026.2/bin/phpstorm64.exe",
+    editor: "phpstorm",
+    args: ["--line", "12", "--column", "4", "/workspace with spaces/file.ts"],
+  },
+  {
+    platform: "win32",
     installPath: "Programs/WebStorm/bin/webstorm64.exe",
     editor: "webstorm",
     args: ["--line", "12", "--column", "4", "/workspace with spaces/file.ts"],
@@ -1091,6 +1097,8 @@ for (const { platform, installPath, editor, args } of [
 it.effect.each([
   { editor: "webstorm", installPath: "Applications/WebStorm 2026.2.app/Contents/MacOS/webstorm" },
   { editor: "idea", installPath: "Applications/IntelliJ IDEA 2026.1.4.app/Contents/MacOS/idea" },
+  { editor: "phpstorm", installPath: "Applications/PhpStorm.app/Contents/MacOS/phpstorm" },
+  { editor: "phpstorm", installPath: "Applications/PhpStorm 2026.2.app/Contents/MacOS/phpstorm" },
 ] as const)(
   "discovers and launches $editor from a versioned macOS bundle",
   ({ editor, installPath }) =>
