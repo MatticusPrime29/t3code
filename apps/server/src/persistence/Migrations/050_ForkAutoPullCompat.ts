@@ -1,5 +1,5 @@
 import * as Effect from "effect/Effect";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
+import * as SqlClient from "effect/sql/SqlClient";
 
 // Fork-era databases recorded migration ids 44/45 before the 2026-09 upstream
 // sync, which suppressed upstream 044 (automatic model default cleanup) and

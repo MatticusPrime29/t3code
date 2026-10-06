@@ -15,8 +15,8 @@ import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
 import * as Semaphore from "effect/Semaphore";
 import * as Scope from "effect/Scope";
-import { HttpBody, HttpClient } from "effect/unstable/http";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { HttpBody, HttpClient } from "effect/http";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 
 import * as ServerConfig from "../config.ts";
 import { resolveServerWhisperResourcePaths } from "./ServerWhisperResources.ts";

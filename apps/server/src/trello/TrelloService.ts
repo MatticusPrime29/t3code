@@ -21,8 +21,8 @@ import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
-import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
+import * as SqlClient from "effect/sql/SqlClient";
+import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 
 import * as ServerConfig from "../config.ts";
 import { attachmentFileExtension, createPendingAttachmentId } from "../attachmentStore.ts";
@@ -259,14 +259,12 @@ const make = Effect.gen(function* () {
         FROM trello_boards
         ORDER BY created_at ASC, board_id ASC
       `.pipe(Effect.mapError(() => failure("api_failed", "Trello boards could not be read.")));
-    return rows.map(
-      (row): TrelloBoardConfiguration => ({
-        boardId: row.boardId as TrelloId,
-        projectId: row.projectId as TrelloBoardConfiguration["projectId"],
-        listFilterMode: row.listFilterMode,
-        listIds: [...parseListIds(row.listIdsJson)],
-      }),
-    );
+    return rows.map((row): TrelloBoardConfiguration => ({
+      boardId: row.boardId as TrelloId,
+      projectId: row.projectId as TrelloBoardConfiguration["projectId"],
+      listFilterMode: row.listFilterMode,
+      listIds: [...parseListIds(row.listIdsJson)],
+    }));
   });
 
   const getSettings = Effect.fn("TrelloService.getSettings")(function* (): Effect.fn.Return<
@@ -361,14 +359,12 @@ const make = Effect.gen(function* () {
     Schema.Array(ApiBoard),
   ).pipe(
     Effect.map((boards) =>
-      boards.map(
-        (board): TrelloBoard => ({
-          id: board.id as TrelloId,
-          name: board.name,
-          url: board.url,
-          closed: board.closed ?? false,
-        }),
-      ),
+      boards.map((board): TrelloBoard => ({
+        id: board.id as TrelloId,
+        name: board.name,
+        url: board.url,
+        closed: board.closed ?? false,
+      })),
     ),
   );
 
@@ -384,13 +380,11 @@ const make = Effect.gen(function* () {
       ),
       Schema.Array(ApiList),
     );
-    return lists.map(
-      (list): TrelloList => ({
-        id: list.id as TrelloId,
-        name: list.name,
-        closed: list.closed ?? false,
-      }),
-    );
+    return lists.map((list): TrelloList => ({
+      id: list.id as TrelloId,
+      name: list.name,
+      closed: list.closed ?? false,
+    }));
   });
 
   const upsertBoard = Effect.fn("TrelloService.upsertBoard")(function* (
@@ -451,7 +445,7 @@ const make = Effect.gen(function* () {
     const linkedRows = yield* sql<{ readonly cardId: string; readonly threadId: string }>`
       SELECT links.card_id AS "cardId", links.thread_id AS "threadId"
       FROM trello_thread_cards links
-      JOIN projection_threads threads ON threads.thread_id = links.thread_id
+      JOIN orchestration_v2_projection_threads threads ON threads.thread_id = links.thread_id
       WHERE threads.deleted_at IS NULL
       ORDER BY links.created_at DESC
     `.pipe(Effect.mapError(() => failure("api_failed", "Trello card links could not be read.")));
@@ -479,21 +473,19 @@ const make = Effect.gen(function* () {
                 : !selected.has(listId as TrelloId);
             return items
               .filter((item) => accepts(item.idList))
-              .map(
-                (item): TrelloCardListItem => ({
-                  id: item.id as TrelloId,
-                  boardId: configuration.boardId,
-                  boardName: boardById.get(configuration.boardId)?.name ?? configuration.boardId,
-                  projectId: configuration.projectId,
-                  listId: item.idList as TrelloId,
-                  name: item.name,
-                  url: item.url,
-                  dateLastActivity: item.dateLastActivity,
-                  threadIds: (threadIdsByCard.get(item.id) ?? []).map(
-                    (threadId) => threadId as ThreadId,
-                  ),
-                }),
-              );
+              .map((item): TrelloCardListItem => ({
+                id: item.id as TrelloId,
+                boardId: configuration.boardId,
+                boardName: boardById.get(configuration.boardId)?.name ?? configuration.boardId,
+                projectId: configuration.projectId,
+                listId: item.idList as TrelloId,
+                name: item.name,
+                url: item.url,
+                dateLastActivity: item.dateLastActivity,
+                threadIds: (threadIdsByCard.get(item.id) ?? []).map(
+                  (threadId) => threadId as ThreadId,
+                ),
+              }));
           }),
         ),
       ),
@@ -524,9 +516,12 @@ const make = Effect.gen(function* () {
     const links = yield* sql<{ readonly cardId: string; readonly latestPromptAt: string | null }>`
       SELECT
         links.card_id AS "cardId",
-        threads.latest_user_message_at AS "latestPromptAt"
+        (SELECT message.updated_at
+         FROM orchestration_v2_projection_messages message
+         WHERE message.thread_id = links.thread_id AND message.role = 'user'
+         ORDER BY message.updated_at DESC, message.message_id DESC LIMIT 1) AS "latestPromptAt"
       FROM trello_thread_cards links
-      LEFT JOIN projection_threads threads ON threads.thread_id = links.thread_id
+      LEFT JOIN orchestration_v2_projection_threads threads ON threads.thread_id = links.thread_id
       WHERE links.thread_id = ${threadId}
       LIMIT 1
     `.pipe(Effect.mapError(() => failure("api_failed", "The Trello card link could not be read.")));

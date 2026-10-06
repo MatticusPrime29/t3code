@@ -91,6 +91,8 @@ export type ThreadGitMenuProps = {
   readonly onPrepareOriginalMerge?: () => void;
   readonly onOpenFilesInspector?: () => void;
   readonly onOpenGitInspector?: () => void;
+  /** Present only on a thread whose work can be merged into the one it came from. */
+  readonly onMergeBack?: () => void;
   readonly onPull: () => Promise<void>;
   readonly onRunAction: (input: GitActionRequestInput) => Promise<GitRunStackedActionResult | null>;
 };
@@ -371,6 +373,17 @@ function useThreadGitHeaderActionItems(props: ThreadGitControlsProps): ThreadGit
                   },
                 ]
               : []),
+            ...(props.onMergeBack
+              ? [
+                  {
+                    description: "Bring this thread's latest turn into its source",
+                    icon: { name: "arrow.triangle.merge", type: "sfSymbol" as const },
+                    label: "Merge back to source",
+                    onPress: props.onMergeBack,
+                    type: "action" as const,
+                  },
+                ]
+              : []),
             {
               description: "Commit, files, branches",
               icon: { name: "ellipsis", type: "sfSymbol" },
@@ -400,6 +413,7 @@ function useThreadGitHeaderActionItems(props: ThreadGitControlsProps): ThreadGit
       props.canOpenFiles,
       props.canOpenTerminal,
       props.gitStatus,
+      props.onMergeBack,
       props.onOpenNewTerminal,
       props.onOpenTerminal,
       props.onPrepareOriginalMerge,

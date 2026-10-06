@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { HttpBody, HttpClient, HttpRouter } from "effect/unstable/http";
+import { HttpBody, HttpClient, HttpRouter } from "effect/http";
 
 import { handleVoiceTranscriptionRequest } from "../http.ts";
 import { ServerWhisperServer } from "./ServerWhisperServer.ts";

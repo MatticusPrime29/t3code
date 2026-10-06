@@ -29,6 +29,7 @@ function renderPendingActions(isRunning: boolean) {
         isComplete: true,
       },
       isRunning,
+      canInterrupt: isRunning,
       showPlanFollowUpPrompt: false,
       promptHasText: false,
       isSendBusy: false,
@@ -37,50 +38,6 @@ function renderPendingActions(isRunning: boolean) {
       isEnvironmentUnavailable: false,
       isPreparingWorktree: false,
       hasSendableContent: false,
-      onPreviousPendingQuestion: () => {},
-      onInterrupt: () => {},
-      onImplementPlanInNewThread: () => {},
-      onSendToEnvironment: () => {},
-    }),
-  );
-}
-
-function renderStandaloneStop() {
-  return renderToStaticMarkup(
-    createElement(ComposerPrimaryActions, {
-      compact: true,
-      pendingAction: null,
-      isRunning: true,
-      showPlanFollowUpPrompt: false,
-      promptHasText: false,
-      isSendBusy: false,
-      sendDisabledReason: null,
-      isConnecting: false,
-      isEnvironmentUnavailable: false,
-      isPreparingWorktree: false,
-      hasSendableContent: false,
-      onPreviousPendingQuestion: () => {},
-      onInterrupt: () => {},
-      onImplementPlanInNewThread: () => {},
-      onSendToEnvironment: () => {},
-    }),
-  );
-}
-
-function renderRunningActions(hasSendableContent: boolean) {
-  return renderToStaticMarkup(
-    createElement(ComposerPrimaryActions, {
-      compact: true,
-      pendingAction: null,
-      isRunning: true,
-      showPlanFollowUpPrompt: false,
-      promptHasText: hasSendableContent,
-      isSendBusy: false,
-      sendDisabledReason: null,
-      isConnecting: false,
-      isEnvironmentUnavailable: false,
-      isPreparingWorktree: false,
-      hasSendableContent,
       onPreviousPendingQuestion: () => {},
       onInterrupt: () => {},
       onImplementPlanInNewThread: () => {},
@@ -95,6 +52,7 @@ function renderSendButton(sendDisabledReason: string | null = null) {
       compact: true,
       pendingAction: null,
       isRunning: false,
+      canInterrupt: false,
       showPlanFollowUpPrompt: false,
       promptHasText: true,
       isSendBusy: false,
@@ -121,7 +79,7 @@ describe("ComposerPrimaryActions", () => {
     const markup = renderSendButton();
 
     expect(markup).toContain('aria-label="Send options"');
-    expect(markup).toContain('aria-label="Send message"');
+    expect(markup).toContain('aria-label="Submit message"');
   });
 
   it("disables and labels the send button while feedback is uploading", () => {
@@ -154,20 +112,5 @@ describe("ComposerPrimaryActions", () => {
     const markup = renderSendButton();
 
     expect(markup).not.toContain("stage-nightly");
-  });
-
-  it("renders a queue action alongside stop while running with a sendable draft", () => {
-    const markup = renderRunningActions(true);
-
-    expect(markup).toContain('aria-label="Stop generation"');
-    expect(markup).toContain('aria-label="Queue message"');
-    expect(markup).toContain('type="submit"');
-  });
-
-  it("keeps stop as the only action while running with an empty composer", () => {
-    const markup = renderRunningActions(false);
-
-    expect(markup).toContain('aria-label="Stop generation"');
-    expect(markup).not.toContain('aria-label="Queue message"');
   });
 });

@@ -1,5 +1,5 @@
 import * as Effect from "effect/Effect";
-import * as SqlClient from "effect/unstable/sql/SqlClient";
+import * as SqlClient from "effect/sql/SqlClient";
 
 // Idempotent on purpose: databases migrated before the 2026-09 upstream sync
 // created these tables under an earlier migration id, so this runs as a no-op

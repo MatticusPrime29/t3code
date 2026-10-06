@@ -1,5 +1,5 @@
 import type { EnvironmentId, ThreadId, TrelloCardContext } from "@t3tools/contracts";
-import { AsyncResult } from "effect/unstable/reactivity";
+import { AsyncResult } from "effect/reactivity";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { type ComposerThreadTarget, useComposerDraftStore } from "../../composerDraftStore";

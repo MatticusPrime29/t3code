@@ -5,7 +5,7 @@ import type {
   TrelloCardListItem,
   TrelloId,
 } from "@t3tools/contracts";
-import { AsyncResult } from "effect/unstable/reactivity";
+import { AsyncResult } from "effect/reactivity";
 import { TrelloIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 

@@ -5,8 +5,8 @@ import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Fiber from "effect/Fiber";
 import * as Path from "effect/Path";
-import { HttpClient, HttpClientResponse } from "effect/unstable/http";
-import * as ChildProcessSpawner from "effect/unstable/process/ChildProcessSpawner";
+import { HttpClient, HttpClientResponse } from "effect/http";
+import * as ChildProcessSpawner from "effect/process/ChildProcessSpawner";
 
 import * as ProcessRunner from "../processRunner.ts";
 import {
@@ -24,7 +24,7 @@ const version = "1.2.3";
 const archiveName = `t3-${version}-linux-x64.tar.gz`;
 const archiveBytes = new TextEncoder().encode("not really a tarball");
 const archiveHex = (bytes: Uint8Array) =>
-  Effect.promise(() => crypto.subtle.digest("SHA-256", bytes)).pipe(
+  Effect.promise(() => crypto.subtle.digest("SHA-256", new Uint8Array(bytes).buffer)).pipe(
     Effect.map((digest) =>
       Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join(""),
     ),

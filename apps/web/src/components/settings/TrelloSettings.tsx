@@ -5,7 +5,7 @@ import type {
   TrelloListFilterMode,
 } from "@t3tools/contracts";
 import * as Cause from "effect/Cause";
-import { AsyncResult } from "effect/unstable/reactivity";
+import { AsyncResult } from "effect/reactivity";
 import {
   ClipboardIcon,
   EyeIcon,

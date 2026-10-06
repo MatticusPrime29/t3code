@@ -1,11 +1,10 @@
 import * as Crypto from "effect/Crypto";
 import * as Effect from "effect/Effect";
-import * as Encoding from "effect/Encoding";
 import * as FileSystem from "effect/FileSystem";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
-import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 
 import whisperManifestJson from "../../native/whisper/manifest.json" with { type: "json" };
 
@@ -108,7 +107,7 @@ const verifyFile = Effect.fn("desktopWhisper.verifyFile")(function* (
       ),
     );
   const actual = yield* crypto.digest("SHA-256", bytes).pipe(
-    Effect.map(Encoding.encodeHex),
+    Effect.flatMap(Schema.encodeEffect(Schema.Uint8ArrayFromHex)),
     Effect.mapError(
       (cause) => new DesktopWhisperDownloadError({ url: filePath, destination: filePath, cause }),
     ),
@@ -134,7 +133,7 @@ const ensureVerifiedDownload = Effect.fn("desktopWhisper.ensureVerifiedDownload"
     if (yield* fs.exists(input.destination)) {
       const valid = yield* verifyFile(input.destination, input.sha256).pipe(
         Effect.as(true),
-        Effect.catchTag("DesktopWhisperChecksumError", () => Effect.succeed(false)),
+        Effect.catchTags({ DesktopWhisperChecksumError: () => Effect.succeed(false) }),
       );
       if (valid) return;
       yield* fs.remove(input.destination, { force: true });
