@@ -1,3 +1,4 @@
+import { captureProviderStderr } from "@t3tools/provider-core/server/ProviderStderr";
 import { revertCodexThread } from "../../provider/CodexThreadRevert.ts";
 import { historyResponseItems } from "@t3tools/provider-core/server/handoffBudget";
 import { makeProviderTextDeltaCoalescer } from "./ProviderTextDeltaCoalescer.ts";
@@ -1412,7 +1413,10 @@ const layerCodexAppServerClientFactoryCommand = (
                   }),
               ),
             );
-            const context = yield* Layer.build(CodexClient.layerChildProcess(handle, options));
+            const stderrCapture = yield* captureProviderStderr(handle, scope);
+            const context = yield* Layer.build(
+              CodexClient.layerChildProcess(handle, { ...options, ...stderrCapture }),
+            );
             return yield* Effect.service(CodexClient.CodexAppServerClient).pipe(
               Effect.provide(context),
             );
@@ -1546,7 +1550,10 @@ export const layerAppServerClientFactory: Layer.Layer<
                   logOutgoing: true,
                   logger: protocolLogger,
                 };
-          const context = yield* Layer.build(CodexClient.layerChildProcess(handle, clientOptions));
+          const stderrCapture = yield* captureProviderStderr(handle, scope);
+          const context = yield* Layer.build(
+            CodexClient.layerChildProcess(handle, { ...clientOptions, ...stderrCapture }),
+          );
           return yield* Effect.service(CodexClient.CodexAppServerClient).pipe(
             Effect.provide(context),
           );

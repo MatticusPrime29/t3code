@@ -1,8 +1,11 @@
 import * as DateTime from "effect/DateTime";
+import * as Deferred from "effect/Deferred";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Ref from "effect/Ref";
+import * as Stream from "effect/Stream";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import * as Scope from "effect/Scope";
@@ -32,6 +35,11 @@ import {
   readCustomModelEntries,
 } from "@t3tools/shared/model";
 import { resolveSpawnCommand } from "@t3tools/shared/shell";
+import {
+  appendProviderStderrTail,
+  PROVIDER_STDERR_DRAIN_GRACE,
+  sanitizeProviderStderrExcerpt,
+} from "@t3tools/provider-core/server/ProviderStderr";
 import { codexAppServerArgs, resolveCodexLaunchArgs } from "./codexLaunchArgs.ts";
 import {
   AUTH_PROBE_TIMEOUT_MS,
@@ -414,7 +422,31 @@ export const withCodexAppServerClient = Effect.fn("withCodexAppServerClient")(fu
           }),
       ),
     );
-  const clientContext = yield* Layer.build(CodexClient.layerChildProcess(child));
+  // The probe has no other stderr reader, so capture a bounded tail here and
+  // hand it to the client: a failing `codex app-server` explains itself on
+  // stderr and then exits 1, which is otherwise reported as a bare exit code.
+  const stderrTailRef = yield* Ref.make("");
+  const stderrDrained = yield* Deferred.make<void>();
+  yield* child.stderr.pipe(
+    Stream.decodeText(),
+    Stream.runForEach((chunk) =>
+      Ref.update(stderrTailRef, (current) => appendProviderStderrTail(current, chunk)),
+    ),
+    Effect.ensuring(Deferred.succeed(stderrDrained, undefined)),
+    Effect.ignore,
+    Effect.forkScoped,
+  );
+
+  const clientContext = yield* Layer.build(
+    CodexClient.layerChildProcess(child, {
+      stderrExcerpt: Deferred.await(stderrDrained).pipe(
+        Effect.timeout(PROVIDER_STDERR_DRAIN_GRACE),
+        Effect.ignore,
+        Effect.andThen(Ref.get(stderrTailRef)),
+        Effect.map((tail) => sanitizeProviderStderrExcerpt(tail)),
+      ),
+    }),
+  );
   const client = yield* Effect.service(CodexClient.CodexAppServerClient).pipe(
     Effect.provide(clientContext),
   );

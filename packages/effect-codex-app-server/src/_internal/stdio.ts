@@ -49,8 +49,14 @@ type ChildProcessTerminationHandle = Pick<
   "exitCode" | "pid"
 >;
 
+/**
+ * Builds the error reported when the child goes away. `stderrExcerpt`, when
+ * supplied, is read at exit time and attached to the process-exited error so
+ * callers see why the child died instead of a bare exit code.
+ */
 export const makeTerminationError = (
   handle: ChildProcessTerminationHandle,
+  stderrExcerpt?: Effect.Effect<string>,
 ): Effect.Effect<CodexError.CodexAppServerError> =>
   Effect.match(handle.exitCode, {
     onFailure: (cause) =>
@@ -60,4 +66,18 @@ export const makeTerminationError = (
         cause,
       }),
     onSuccess: (code) => new CodexError.CodexAppServerProcessExitedError({ code, pid: handle.pid }),
-  });
+  }).pipe(
+    Effect.flatMap((error) =>
+      stderrExcerpt === undefined || error._tag !== "CodexAppServerProcessExitedError"
+        ? Effect.succeed(error)
+        : Effect.map(stderrExcerpt, (excerpt) =>
+            excerpt.trim().length === 0
+              ? error
+              : new CodexError.CodexAppServerProcessExitedError({
+                  ...(error.code !== undefined ? { code: error.code } : {}),
+                  ...(error.pid !== undefined ? { pid: error.pid } : {}),
+                  stderr: excerpt,
+                }),
+          ),
+    ),
+  );

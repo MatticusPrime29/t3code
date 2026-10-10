@@ -1,27 +1,27 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  ACP_STDERR_TAIL_MAX_CHARS,
-  appendAcpStderrTail,
-  sanitizeAcpStderrExcerpt,
-} from "./stderr.ts";
+  PROVIDER_STDERR_TAIL_MAX_CHARS,
+  appendProviderStderrTail,
+  sanitizeProviderStderrExcerpt,
+} from "./ProviderStderr.ts";
 
-describe("AcpStderr", () => {
+describe("ProviderStderr", () => {
   it("keeps a bounded tail of stderr chunks", () => {
-    const prefix = "x".repeat(ACP_STDERR_TAIL_MAX_CHARS);
-    expect(appendAcpStderrTail(prefix, "abc")).toBe(`${prefix.slice(3)}abc`);
+    const prefix = "x".repeat(PROVIDER_STDERR_TAIL_MAX_CHARS);
+    expect(appendProviderStderrTail(prefix, "abc")).toBe(`${prefix.slice(3)}abc`);
   });
 
   it("redacts home paths, pairing URLs, and tokens from stderr excerpts", () => {
-    const excerpt = sanitizeAcpStderrExcerpt(
+    const excerpt = sanitizeProviderStderrExcerpt(
       [
         "Invalid project config at /Users/ada/.cursor/cli.json",
         "Authorization: Bearer secret-token-value",
         "Visit http://localhost:5733/pair#token=ABCDEF for pairing",
         "key=sk-abcdefghijklmnopqrstuv",
       ].join("\n"),
-      "/home/server",
       { HOME: "/Users/ada" },
+      "/home/server",
     );
 
     expect(excerpt).toContain("Invalid project config at ~/.cursor/cli.json");
@@ -34,7 +34,7 @@ describe("AcpStderr", () => {
   });
 
   it("redacts hyphenated OpenAI project keys and header credentials", () => {
-    const excerpt = sanitizeAcpStderrExcerpt(
+    const excerpt = sanitizeProviderStderrExcerpt(
       [
         "openai=sk-proj-abcdefghijklmnopqrstuvwxyz012345",
         "svc=sk-svcacct-abcdefghijklmnopqrstuvwxyz012345",
@@ -42,8 +42,8 @@ describe("AcpStderr", () => {
         "Authorization: Basic dXNlcjpwYXNz",
         "x-api-key: ant-api-key-value",
       ].join("\n"),
-      "/Users/ada",
       {},
+      "/Users/ada",
     );
 
     expect(excerpt).toContain("[redacted]");

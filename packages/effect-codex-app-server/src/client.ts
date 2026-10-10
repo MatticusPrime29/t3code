@@ -25,6 +25,14 @@ export interface CodexAppServerClientOptions {
   readonly logger?: (
     event: CodexProtocol.CodexAppServerProtocolLogEvent,
   ) => Effect.Effect<void, never>;
+  /**
+   * Yields the stderr excerpt attached to process-exit errors, read when the
+   * child exits. Pass this whenever the caller reads `handle.stderr` itself:
+   * the child exposes one shared stderr pipe, so a second reader inside the
+   * client would steal chunks from the caller rather than copy them. When
+   * omitted the client drains stderr itself and reports only the exit code.
+   */
+  readonly stderrExcerpt?: Effect.Effect<string>;
 }
 
 interface CodexAppServerClientRaw {
@@ -270,6 +278,14 @@ export const layerChildProcess = (
 const makeChildProcessClient = Effect.fn(
   "effect-codex-app-server/CodexAppServerClient.makeChildProcessClient",
 )(function* (handle: ChildProcessSpawner.ChildProcessHandle, options: CodexAppServerClientOptions) {
-  yield* Stream.runDrain(handle.stderr).pipe(Effect.ignore, Effect.forkScoped);
-  return yield* make(makeChildStdio(handle), options, makeTerminationError(handle));
+  if (options.stderrExcerpt === undefined) {
+    // Nobody else is reading stderr, so drain it here: a full stderr pipe
+    // blocks the child mid-write and stalls protocol responses.
+    yield* Stream.runDrain(handle.stderr).pipe(Effect.ignore, Effect.forkScoped);
+  }
+  return yield* make(
+    makeChildStdio(handle),
+    options,
+    makeTerminationError(handle, options.stderrExcerpt),
+  );
 });

@@ -21,6 +21,24 @@ describe("Codex App Server child process termination", () => {
     }),
   );
 
+  it.effect("attaches captured diagnostics to a process-exit error", () =>
+    Effect.gen(function* () {
+      const error = yield* makeTerminationError(
+        {
+          pid: ChildProcessSpawner.ProcessId(53),
+          exitCode: Effect.succeed(ChildProcessSpawner.ExitCode(1)),
+        },
+        Effect.succeed("Invalid project configuration"),
+      );
+      assert.instanceOf(error, CodexError.CodexAppServerProcessExitedError);
+      assert.equal(error.stderr, "Invalid project configuration");
+      assert.equal(
+        error.message,
+        "Codex App Server process exited with code 1\nInvalid project configuration",
+      );
+    }),
+  );
+
   it.effect("retains the process identifier and exact exit-status cause", () =>
     Effect.gen(function* () {
       const rootCause = new Error("private process diagnostics");
