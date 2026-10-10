@@ -26,6 +26,8 @@ it("formats issued pairing credentials with the secret and optional pair URL", (
   expect(output).toContain(
     "Use this pairing link exactly once: open or scan it, or paste it into Add Environment, but not both.",
   );
+  expect(output).toContain("Expires at: 2026-04-08T10:00:00.000Z");
+  expect(output).not.toContain("DateTime.Utc");
 });
 
 it("formats pairing listings without exposing the secret token", () => {

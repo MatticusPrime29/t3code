@@ -81,7 +81,6 @@ it.layer(ProjectStore.layer.pipe(Layer.provideMerge(SqlitePersistence.layerMemor
             Option.getOrNull(yield* projects.get(projectId))?.originalRepository,
             null,
           );
-          // @effect-diagnostics-next-line preferSchemaOverJson:off
           assert.strictEqual(rows[0]?.defaultModelSelection, JSON.stringify(modelSelection));
           assert.deepStrictEqual(
             Option.getOrNull(yield* projects.get(projectId))?.defaultModelSelection,

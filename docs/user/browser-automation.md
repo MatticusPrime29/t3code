@@ -15,17 +15,9 @@ When no desktop browser host is connected, the T3 Code server runs the agent bro
 coding environment. This is important for remote work: `localhost` refers to the environment that
 owns the project rather than the phone or browser displaying T3 Code.
 
-The server starts this browser only when an agent first uses a browser tool. Google Chrome or
-Microsoft Edge must be installed on the environment machine. To use another Chromium-compatible
-binary, start T3 Code with its absolute path:
-
-```bash
-T3CODE_PREVIEW_BROWSER_EXECUTABLE=/path/to/chromium npx t3
-```
-
-The server-hosted browser is headless, so the web client does not embed the live page. Agent
-snapshots still include the rendered PNG, visible text, interactive elements, accessibility data,
-console output, network results, and action history.
+The server installs its browser on first use. That download requires an internet connection on the
+environment machine. Web and mobile clients can display the server browser and share its tabs with
+agents.
 
 ## Access Control
 

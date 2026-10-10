@@ -1,4 +1,4 @@
-import { HostProcessPlatform } from "@t3tools/shared/hostProcess";
+import * as HostProcess from "@t3tools/shared/HostProcess";
 import * as NetService from "@t3tools/shared/Net";
 import * as Context from "effect/Context";
 import * as Crypto from "effect/Crypto";
@@ -76,7 +76,7 @@ export const layer = Layer.effect(
   Effect.gen(function* () {
     const parentScope = yield* Scope.Scope;
     const config = yield* ServerConfig.ServerConfig;
-    const platform = yield* HostProcessPlatform;
+    const platform = yield* HostProcess.Platform;
     const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
     const net = yield* NetService.NetService;
     const crypto = yield* Crypto.Crypto;
